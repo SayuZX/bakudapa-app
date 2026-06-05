@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter pub *)",
+      "Bash(curl -s https://pub.dev/api/packages/record_linux)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Latest:', d['latest']['version']\\); print\\('Versions:', [v['version'] for v in d['versions'][-10:]]\\)\")",
+      "PowerShell(Get-Process -Name \"dart\",\"flutter\",\"java\",\"gradle\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process | Where-Object { $_.Name -match \"dart|flutter|java|gradle\" } | Select-Object Name, Id, StartTime)",
+      "PowerShell($p = \"E:\\\\Projects Pemerintah\\\\bakudapa-app\\\\.dart_tool\\\\hooks_runner\\\\shared\\\\objective_c\\\\.lock\"; Write-Output \\(\"Exists: \" + \\(Test-Path -LiteralPath $p\\)\\); Get-Item -LiteralPath $p -Force)",
+      "PowerShell($root = \"E:\\\\Projects Pemerintah\\\\bakudapa-app\\\\.dart_tool\\\\hooks_runner\"; Get-ChildItem -LiteralPath $root -Recurse -Force -File | Where-Object { $_.Name -eq \".lock\" } | ForEach-Object { Write-Output \\(\"Removing: \" + $_.FullName\\); Remove-Item -LiteralPath $_.FullName -Force })",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match \"dart|flutter|java|gradle|adb\" } | Select-Object ProcessName, Id, StartTime, Path | Format-Table -AutoSize)",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match \"^\\(dart|dartvm\\)$\" } | ForEach-Object { Write-Output \\(\"Stopping \" + $_.ProcessName + \" PID=\" + $_.Id\\); Stop-Process -Id $_.Id -Force })",
+      "PowerShell(Start-Sleep -Seconds 1; Get-Process | Where-Object { $_.ProcessName -match \"^\\(dart|dartvm\\)$\" } | Select-Object ProcessName, Id, StartTime)",
+      "PowerShell($root = \"E:\\\\Projects Pemerintah\\\\bakudapa-app\\\\.dart_tool\\\\hooks_runner\"; Get-ChildItem -LiteralPath $root -Recurse -Force -File | Where-Object { $_.Name -eq \".lock\" } | ForEach-Object { try { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop; Write-Output \\(\"Removed: \" + $_.FullName\\) } catch { Write-Output \\(\"FAILED: \" + $_.FullName + \" -> \" + $_.Exception.Message\\) } })",
+      "PowerShell(flutter analyze lib 2>&1)",
+      "Bash(awk -F: '{ split\\($1, p, \"/\"\\); feat=p[3]; line=$0; if \\(match\\(line, /features\\\\/[a-z]+\\\\//\\)\\) { imp=substr\\(line, RSTART+9\\); split\\(imp, q, \"/\"\\); impfeat=q[1]; if \\(feat != impfeat\\) print $1 \" imports feature: \" impfeat } }')",
+      "Bash(xargs grep -l \"repositori_registrasi\\\\|TODO_ENCRYPTED_TEMPLATE\\\\|sidik_jari\\\\|sidikJari\")",
+      "Bash(powershell -NoProfile -Command \"Get-ChildItem -Recurse -Path lib -Filter *.dart | Measure-Object | Select-Object Count\")",
+      "Bash(xargs grep -li \"ai/tanya\\\\|aiTanya\\\\|repositori_ai\\\\|repositori_asisten\\\\|chat\\\\|asisten\")",
+      "Bash(powershell -NoProfile -Command \"Select-String -Path pubspec.yaml -Pattern 'cached|shimmer|image|dio|riverpod|router|camera|google|skeleton|paging|infinite|visibility' | Select-Object -ExpandProperty Line\")",
+      "Bash(grep -rnE \"//.*\\(TODO|FIXME|HACK\\)\\\\b|/\\\\*.*\\(TODO|FIXME\\)\" lib --include=*.dart)",
+      "Bash(f=\"/c/Users/RAYH4ZE/AppData/Local/Temp/claude/e--Projects-Pemerintah-bakudapa-app/0d38d415-8660-4164-baa6-c34de41e6fef/tasks/b20necldg.output\"; echo \"=== size: $\\(wc -l < \"$f\"\\) lines ===\"; tail -n 30 \"$f\")",
+      "Read(//c/Users/RAYH4ZE/AppData/Local/Temp/claude/e--Projects-Pemerintah-bakudapa-app/0d38d415-8660-4164-baa6-c34de41e6fef/tasks/**)",
+      "Bash(E:/flutter/bin/flutter analyze *)",
+      "Bash(claude mcp *)",
+      "PowerShell(claude mcp list)",
+      "PowerShell(Write-Output \"=== uv / uvx ===\"; \\(Get-Command uv -ErrorAction SilentlyContinue\\).Source; \\(Get-Command uvx -ErrorAction SilentlyContinue\\).Source; Write-Output \"=== port 9876 \\(socket Blender\\) ===\"; \\(Get-NetTCPConnection -LocalPort 9876 -ErrorAction SilentlyContinue | Select-Object State,OwningProcess | Format-Table | Out-String\\); Write-Output \"=== proses Blender ===\"; \\(Get-Process blender -ErrorAction SilentlyContinue | Select-Object Id,ProcessName | Format-Table | Out-String\\))",
+      "PowerShell(Write-Output \"=== python ===\"; \\(Get-Command python -ErrorAction SilentlyContinue\\).Source; \\(Get-Command py -ErrorAction SilentlyContinue\\).Source; \\(Get-Command pip -ErrorAction SilentlyContinue\\).Source; Write-Output \"=== user mcp config ===\"; if \\(Test-Path \"$env:USERPROFILE\\\\.claude.json\"\\) { Write-Output \"ada: $env:USERPROFILE\\\\.claude.json\" } else { Write-Output \"tidak ada .claude.json\" })",
+      "PowerShell($j = Get-Content \"$env:USERPROFILE\\\\.claude.json\" -Raw | ConvertFrom-Json; function Find-Blender\\($obj, $path\\){ foreach\\($p in $obj.PSObject.Properties\\){ if\\($p.Name -eq 'mcpServers' -and $p.Value\\){ foreach\\($s in $p.Value.PSObject.Properties\\){ if\\($s.Name -match 'blender'\\){ Write-Output \"PATH: $path/mcpServers/$\\($s.Name\\)\"; $s.Value | ConvertTo-Json -Depth 6 } } } if\\($p.Value -is [System.Management.Automation.PSCustomObject]\\){ Find-Blender $p.Value \"$path/$\\($p.Name\\)\" } } }; Find-Blender $j \"\")",
+      "PowerShell($p = \"C:\\\\Users\\\\RAYH4ZE\\\\.local\\\\bin\\\\uvx.exe\"; if \\(Test-Path $p\\) { Write-Output \"ADA: $p\"; & $p --version } else { Write-Output \"TIDAK ADA: $p\" }; Write-Output \"=== isi .local\\\\bin ===\"; if \\(Test-Path \"C:\\\\Users\\\\RAYH4ZE\\\\.local\\\\bin\"\\) { Get-ChildItem \"C:\\\\Users\\\\RAYH4ZE\\\\.local\\\\bin\" | Select-Object Name | Format-Table | Out-String } else { Write-Output \"folder .local\\\\bin tidak ada\" })",
+      "PowerShell($exe = \"C:\\\\Users\\\\RAYH4ZE\\\\.local\\\\bin\\\\blender-mcp.exe\"; $psi = New-Object System.Diagnostics.ProcessStartInfo; $psi.FileName = $exe; $psi.RedirectStandardError = $true; $psi.RedirectStandardOutput = $true; $psi.UseShellExecute = $false; $p = [System.Diagnostics.Process]::Start\\($psi\\); Start-Sleep -Seconds 8; if \\(-not $p.HasExited\\) { Write-Output \"STATUS: masih berjalan \\(server stdio normal menunggu input\\)\"; $p.Kill\\(\\) } else { Write-Output \"STATUS: keluar dengan exit code $\\($p.ExitCode\\)\" }; Write-Output \"=== STDERR ===\"; $p.StandardError.ReadToEnd\\(\\))",
+      "mcp__blender__get_scene_info",
+      "mcp__blender__execute_blender_code"
+    ]
+  }
+}
