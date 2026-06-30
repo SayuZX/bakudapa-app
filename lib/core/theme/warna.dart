@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 class Warna {
   const Warna._();
 
-  static const Color merahUtama = Color(0xFFC8102E);
-  static const Color merahGelap = Color(0xFFA00C24);
-  static const Color merahLembut = Color(0xFFFCE8EC);
+  static const Color primer = Color(0xFF132B50);
+  static const Color primerGelap = Color(0xFF0B1C38);
+  static const Color primerLembut = Color(0xFFE8EDF5);
   static const Color putih = Color(0xFFFFFFFF);
 
   static const Color netral25 = Color(0xFFFBFBFC);
