@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 
+import '../config/endpoints.dart';
 import '../network/klien_jaringan.dart';
 import 'model_konfigurasi_sistem.dart';
 
@@ -9,7 +10,7 @@ class LayananKonfigurasiSistem {
   LayananKonfigurasiSistem._();
   static final LayananKonfigurasiSistem instance = LayananKonfigurasiSistem._();
 
-  static const String _endpoint = '/sistem/konfigurasi';
+  static const String _endpoint = Endpoints.sistemKonfigurasi;
   static const Duration _ttl = Duration(minutes: 30);
 
   KonfigurasiSistem _terakhir = KonfigurasiSistem.bawaan;
