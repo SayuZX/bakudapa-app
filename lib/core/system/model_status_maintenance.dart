@@ -38,13 +38,27 @@ class StatusMaintenance {
       return const [];
     }
 
+    String? teks(List<String> kunci) {
+      for (final k in kunci) {
+        final v = json[k];
+        if (v is String && v.isNotEmpty) return v;
+      }
+      return null;
+    }
+
     return StatusMaintenance(
-      aktif: json['maintenance'] == true,
-      judul: json['title'] as String?,
-      pesan: json['message'] as String?,
-      estimasiSelesai: parseTanggal(json['estimated_until']),
-      kontakDukungan: json['support_contact'] as String?,
-      fiturDiizinkan: parseFitur(json['allowed_features']),
+      aktif: json['maintenance'] == true ||
+          json['sedang_maintenance'] == true ||
+          json['is_maintenance'] == true,
+      judul: teks(['title', 'judul']),
+      pesan: teks(['message', 'pesan']),
+      estimasiSelesai: parseTanggal(
+        json['estimated_until'] ?? json['perkiraan_selesai'],
+      ),
+      kontakDukungan: teks(['support_contact', 'kontak_dukungan', 'kontak']),
+      fiturDiizinkan: parseFitur(
+        json['allowed_features'] ?? json['fitur_diizinkan'],
+      ),
       diperiksaPada: DateTime.now(),
     );
   }
