@@ -68,6 +68,7 @@ class _HalamanLivenessState extends ConsumerState<HalamanLiveness>
 
   final PenghalusEma _yaw = PenghalusEma(alpha: 0.32);
   final PenghalusEma _pitch = PenghalusEma(alpha: 0.32);
+  final PenghalusOffset _offset = PenghalusOffset(alpha: 0.35);
 
   _Tahap _tahap = _Tahap.persiapan;
   int _indeksTantangan = 0;
@@ -95,9 +96,18 @@ class _HalamanLivenessState extends ConsumerState<HalamanLiveness>
         systemNavigationBarIconBrightness: Brightness.light,
       ),
     );
-    _tantangan = LayananLiveness.instance.acakTantangan(jumlah: 3);
+    _tantangan = _tantanganAwal();
     _periksaPerangkat();
     _siapkanKamera();
+  }
+
+  List<TantanganLiveness> _tantanganAwal() {
+    final kodeServer =
+        ref.read(penyediaRegistrasi).sesi.kodeTantanganLivenessServer;
+    final dariServer = LayananLiveness.instance.dariKode(kodeServer);
+    return dariServer != null
+        ? [dariServer]
+        : LayananLiveness.instance.acakTantangan(jumlah: 1);
   }
 
   Future<void> _periksaPerangkat() async {
@@ -133,7 +143,7 @@ class _HalamanLivenessState extends ConsumerState<HalamanLiveness>
       gambar,
       c.description,
     );
-    if (!mounted) return;
+    if (hasil == null || !mounted) return;
     final yawBaru = hasil.ada
         ? ((hasil.sudutY ?? 0) / _derajatNormalisasi).clamp(-1.0, 1.0)
         : 0.0;
@@ -142,6 +152,7 @@ class _HalamanLivenessState extends ConsumerState<HalamanLiveness>
         : 0.0;
     _yaw.terapkan(yawBaru);
     _pitch.terapkan(pitchBaru);
+    _offset.terapkan(hasil.ada ? hasil.pusatRelatif : Offset.zero);
     setState(() => _wajah = hasil);
   }
 
@@ -217,7 +228,7 @@ class _HalamanLivenessState extends ConsumerState<HalamanLiveness>
     try {
       final k = await LayananKamera.instance.buat(
         arah: ArahKamera.depan,
-        aktifkanAudio: true,
+        aktifkanAudio: false,
         resolusi: ResolutionPreset.medium,
         formatGambar: LayananKamera.formatDeteksiWajah,
       );
@@ -352,7 +363,7 @@ class _HalamanLivenessState extends ConsumerState<HalamanLiveness>
       _tahap = _Tahap.persiapan;
       _jalurVideo = null;
       _indeksTantangan = 0;
-      _tantangan = LayananLiveness.instance.acakTantangan(jumlah: 3);
+      _tantangan = _tantanganAwal();
     });
     await BerkasSementara.instance.hapus(lama);
     final c = _kontroler;
@@ -387,8 +398,8 @@ class _HalamanLivenessState extends ConsumerState<HalamanLiveness>
     if (ok) {
       ref
           .read(penyediaRegistrasi.notifier)
-          .ubahLangkah(LangkahRegistrasi.suara);
-      context.push(NamaRute.daftarSuara);
+          .ubahLangkah(LangkahRegistrasi.kebijakan);
+      context.push(NamaRute.daftarKebijakan);
     } else {
       final p =
           ref.read(penyediaRegistrasi).pesanGalat ??
@@ -444,7 +455,7 @@ class _HalamanLivenessState extends ConsumerState<HalamanLiveness>
                   else
                     BingkaiWajahLiveness(
                       kondisi: _kondisiBingkai(),
-                      offsetWajah: _wajah.pusatRelatif,
+                      offsetWajah: _offset.nilai,
                       wajahTerdeteksi: _wajah.ada,
                       yawNorm: _yaw.nilai,
                       pitchNorm: _pitch.nilai,
@@ -589,7 +600,7 @@ class _HalamanLivenessState extends ConsumerState<HalamanLiveness>
         }
         return null;
       case _Tahap.selesai:
-        return t.lanjutkanKeVerifikasiSuara;
+        return t.lanjutkanSetelahVerifikasiWajah;
     }
   }
 
