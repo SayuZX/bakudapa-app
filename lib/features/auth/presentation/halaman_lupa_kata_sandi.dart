@@ -33,20 +33,33 @@ class _HalamanLupaKataSandiState extends ConsumerState<HalamanLupaKataSandi> {
   Future<void> _kirim() async {
     final t = ref.read(teksProvider);
     if (!(_kunci.currentState?.validate() ?? false)) return;
+    FocusScope.of(context).unfocus();
     setState(() => _memuat = true);
+    String? galatJaringan;
     try {
       await ref.read(penyediaRepositoriOtentikasi).mintaResetKataSandi(
             identitas: _identitas.text.trim(),
           );
-      if (!mounted) return;
-      context.tampilkanPesan(t.tautanResetTerkirim);
-      context.pop();
-    } on Kesalahan catch (e) {
-      if (!mounted) return;
-      context.tampilkanPesan(e.pesan, galat: true);
+    } on KesalahanJaringan catch (e) {
+      galatJaringan = e.pesan;
+    } on KesalahanBatasWaktu catch (e) {
+      galatJaringan = e.pesan;
+    } on KesalahanBatasFrekuensi catch (e) {
+      galatJaringan = e.pesan;
+    } on KesalahanBatasFrekuensiDenganRetry catch (e) {
+      galatJaringan = e.pesan;
+    } catch (_) {
+      galatJaringan = null;
     } finally {
       if (mounted) setState(() => _memuat = false);
     }
+    if (!mounted) return;
+    if (galatJaringan != null) {
+      context.tampilkanPesan(galatJaringan, galat: true);
+      return;
+    }
+    context.tampilkanPesan(t.lupaPesanNetral);
+    context.pop();
   }
 
   @override
@@ -76,7 +89,7 @@ class _HalamanLupaKataSandiState extends ConsumerState<HalamanLupaKataSandi> {
               child: FilledButton(
                 onPressed: _memuat ? null : _kirim,
                 style: FilledButton.styleFrom(
-                  backgroundColor: Warna.merahUtama,
+                  backgroundColor: Warna.primer,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: Warna.netral200,
                   elevation: 0,
@@ -106,7 +119,7 @@ class _HalamanLupaKataSandiState extends ConsumerState<HalamanLupaKataSandi> {
                 child: Text(
                   t.kembaliKeHalamanMasuk,
                   style: const TextStyle(
-                    color: Warna.merahUtama,
+                    color: Warna.primer,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
