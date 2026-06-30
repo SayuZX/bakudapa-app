@@ -3,130 +3,238 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/config/endpoints.dart';
 import '../../../core/errors/kesalahan.dart';
 import '../../../core/network/klien_jaringan.dart';
+import '../../../core/storage/berkas_sementara.dart';
+import '../../../core/upload/layanan_unggah.dart';
 import '../../../shared/models/halaman_data.dart';
-import '../../../shared/models/jenis_layanan.dart';
 import '../../../shared/models/permohonan.dart';
 import '../domain/repositori_permohonan.dart';
 
 class RepositoriPermohonanApi implements RepositoriPermohonan {
-  RepositoriPermohonanApi({Dio? dio}) : _dio = dio ?? KlienJaringan.instance.dio;
+  RepositoriPermohonanApi({Dio? dio, LayananUnggah? unggah})
+      : _dio = dio ?? KlienJaringan.instance.dio,
+        _unggah = unggah ?? LayananUnggah.instance;
+
   final Dio _dio;
+  final LayananUnggah _unggah;
 
   @override
-  Future<HalamanData<Permohonan>> mintaRiwayat({
+  Future<HalamanData<Permohonan>> mintaDaftar({
     int halaman = 1,
     int ukuran = 15,
-    String? kueriPencarian,
+    String? status,
+    String? cari,
   }) async {
     try {
       final res = await _dio.get(
-        '/permohonan',
+        Endpoints.permohonan,
         queryParameters: {
           'halaman': halaman,
-          'ukuran': ukuran,
-          if (kueriPencarian != null && kueriPencarian.isNotEmpty) 'kueri': kueriPencarian,
+          'per_halaman': ukuran,
+          if (status != null && status.isNotEmpty) 'status': status,
+          if (cari != null && cari.isNotEmpty) 'cari': cari,
         },
       );
-      final body = res.data as Map<String, dynamic>;
-      final daftar = (body['data'] as List<dynamic>? ?? const [])
-          .map((e) => Permohonan.dariJson(e as Map<String, dynamic>))
-          .toList();
-      final meta = body['meta'] as Map<String, dynamic>? ?? const {};
+      final daftar =
+          _bacaDaftar(res.data).map(Permohonan.dariJson).toList();
+      final meta = _bacaMeta(res);
       return HalamanData(
         daftar: daftar,
-        halaman: meta['halaman'] as int? ?? halaman,
-        totalHalaman: meta['total_halaman'] as int? ?? 1,
-        totalItem: meta['total_item'] as int? ?? daftar.length,
+        halaman: _metaInt(meta, const ['halaman', 'current_page'], halaman),
+        totalHalaman:
+            _metaInt(meta, const ['total_halaman', 'total_pages'], 1),
+        totalItem:
+            _metaInt(meta, const ['total', 'total_count'], daftar.length),
       );
     } on DioException catch (e) {
-      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
-    } catch (_) {
-      throw const KesalahanTakDikenal();
+      throw _kesalahan(e);
     }
+  }
+
+  @override
+  Future<List<Permohonan>> mintaGabunganTerbaru({int ukuran = 20}) async {
+    final halaman = await mintaDaftar(halaman: 1, ukuran: ukuran);
+    return halaman.daftar;
   }
 
   @override
   Future<Permohonan> mintaDetail(String id) async {
     try {
-      final res = await _dio.get('/permohonan/$id');
-      final body = res.data as Map<String, dynamic>;
-      return Permohonan.dariJson(body['data'] as Map<String, dynamic>? ?? body);
+      final res = await _dio.get(Endpoints.permohonanDetail(id));
+      return Permohonan.dariJson(_bacaObjek(res.data));
     } on DioException catch (e) {
-      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
-    } catch (_) {
-      throw const KesalahanTakDikenal();
+      throw _kesalahan(e);
     }
   }
 
   @override
-  Future<RingkasanStatus> mintaRingkasan() async {
-    try {
-      final res = await _dio.get('/permohonan/ringkasan');
-      final data = _bacaData(res.data) ?? const {};
-      return RingkasanStatus(
-        menunggu: data['menunggu'] as int? ?? 0,
-        berjalan: data['berjalan'] as int? ?? 0,
-        selesai: data['selesai'] as int? ?? 0,
-      );
-    } on DioException catch (e) {
-      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
-    } catch (_) {
-      throw const KesalahanTakDikenal();
-    }
-  }
-
-  @override
-  Future<Permohonan> ajukan({
-    required JenisLayanan jenis,
-    required Map<String, dynamic> data,
-    required List<File> lampiran,
+  Future<HasilAjukan> ajukan({
+    required String kodeLayanan,
+    required Map<String, String> dataFormulir,
+    required Map<String, File> berkas,
+    Map<String, bool> wajibBerkas = const <String, bool>{},
+    Map<String, String> labelBerkas = const <String, String>{},
   }) async {
-    try {
-      final form = FormData();
-      form.fields.add(MapEntry('jenis', jenis.kode));
-      data.forEach((k, v) => form.fields.add(MapEntry(k, v?.toString() ?? '')));
-      for (var i = 0; i < lampiran.length; i++) {
-        final berkas = lampiran[i];
-        form.files.add(
-          MapEntry(
-            'lampiran[]',
-            await MultipartFile.fromFile(berkas.path, filename: berkas.uri.pathSegments.last),
-          ),
-        );
-      }
-      final res = await _dio.post(
-        '/permohonan',
-        data: form,
-        options: Options(headers: {'X-Idempotency-Key': const Uuid().v4()}),
+    final dokumen = <Map<String, dynamic>>[];
+    for (final masuk in berkas.entries) {
+      final kunciStorage = await _unggah.unggah(
+        berkas: masuk.value,
+        jenis: JenisUnggah.dokumenPermohonan,
       );
-      return Permohonan.dariJson(_bacaData(res.data) ?? const {});
+      dokumen.add({
+        'jenis': masuk.key,
+        'label': labelBerkas[masuk.key] ?? masuk.key,
+        'kunci_storage': kunciStorage,
+        'nama_file': masuk.value.uri.pathSegments.last,
+        'wajib': wajibBerkas[masuk.key] ?? false,
+      });
+    }
+    try {
+      final res = await _dio.post(
+        Endpoints.layananAjukan(kodeLayanan),
+        data: {
+          'data_formulir': dataFormulir,
+          'dokumen': dokumen,
+        },
+        options: Options(
+          headers: {'X-Idempotency-Key': const Uuid().v4()},
+          sendTimeout: const Duration(minutes: 3),
+          receiveTimeout: const Duration(minutes: 3),
+        ),
+      );
+      final data = _bacaObjek(res.data);
+      return HasilAjukan(
+        id: data['id']?.toString() ?? '',
+        nomorPermohonan: data['kode_referensi']?.toString() ??
+            data['nomor_permohonan']?.toString() ??
+            '',
+        slugLayanan: data['jenis_layanan']?.toString() ?? kodeLayanan,
+      );
     } on DioException catch (e) {
-      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
-    } catch (_) {
-      throw const KesalahanTakDikenal();
+      throw _kesalahan(e);
     }
   }
 
   @override
-  Future<String> unduhDokumenHasil(String idPermohonan) async {
+  Future<void> batalkan(String id) async {
     try {
-      final res = await _dio.get('/permohonan/$idPermohonan/dokumen');
-      final data = _bacaData(res.data) ?? const {};
-      return data['url']?.toString() ?? '';
+      await _dio.delete(Endpoints.permohonanDetail(id));
     } on DioException catch (e) {
-      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
-    } catch (_) {
-      throw const KesalahanTakDikenal();
+      throw _kesalahan(e);
     }
   }
 
-  Map<String, dynamic>? _bacaData(dynamic body) {
-    if (body is! Map) return null;
-    final map = Map<String, dynamic>.from(body);
-    final inner = map['data'];
-    if (inner is Map) return Map<String, dynamic>.from(inner);
-    return map;
+  @override
+  Future<void> lampirkanDokumen({
+    required String id,
+    required File berkas,
+    required String jenis,
+    bool wajib = false,
+  }) async {
+    final kunciStorage = await _unggah.unggah(
+      berkas: berkas,
+      jenis: JenisUnggah.dokumenPermohonan,
+    );
+    try {
+      await _dio.post(
+        Endpoints.permohonanDokumen(id),
+        data: {
+          'kunci_storage': kunciStorage,
+          'jenis': jenis,
+          'nama_file': berkas.uri.pathSegments.last,
+          'wajib': wajib,
+        },
+      );
+    } on DioException catch (e) {
+      throw _kesalahan(e);
+    }
+  }
+
+  @override
+  Future<List<DokumenHasil>> mintaDokumenHasil(String id) async {
+    try {
+      final res = await _dio.get(Endpoints.permohonanDokumenHasil(id));
+      return _bacaDaftar(res.data).map(DokumenHasil.dariJson).toList();
+    } on DioException catch (e) {
+      throw _kesalahan(e);
+    }
+  }
+
+  @override
+  Future<String> unduhDokumenHasil(String id, DokumenHasil dokumen) async {
+    try {
+      final namaDasar = (dokumen.namaBerkas?.isNotEmpty ?? false)
+          ? dokumen.namaBerkas!
+          : 'dokumen_hasil_${dokumen.id}.pdf';
+      final aman = namaDasar.replaceAll(RegExp(r'[^\w.\- ]'), '_');
+      final tujuan = await BerkasSementara.instance.jalurBaru(aman);
+      await _dio.download(
+        Endpoints.permohonanDokumenHasilDetail(id, dokumen.id),
+        tujuan,
+        options: Options(
+          receiveTimeout: const Duration(minutes: 2),
+          validateStatus: (s) => s == 200,
+        ),
+      );
+      return tujuan;
+    } on DioException catch (e) {
+      throw _kesalahan(e);
+    }
+  }
+
+  Kesalahan _kesalahan(DioException e) =>
+      e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
+
+  List<Map<String, dynamic>> _bacaDaftar(dynamic body) {
+    dynamic isi = body;
+    if (isi is Map) {
+      isi = isi['permohonan'] ??
+          isi['dokumen'] ??
+          isi['data'] ??
+          isi['items'] ??
+          isi['list'] ??
+          isi.values.firstWhere((v) => v is List, orElse: () => null);
+    }
+    if (isi is List) {
+      return isi
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    }
+    return const [];
+  }
+
+  Map<String, dynamic> _bacaObjek(dynamic body) {
+    if (body is Map) {
+      final inner = body['permohonan'] ?? body['data'];
+      if (inner is Map) return Map<String, dynamic>.from(inner);
+      return Map<String, dynamic>.from(body);
+    }
+    return const {};
+  }
+
+  Map<String, dynamic> _bacaMeta(Response res) {
+    final ekstra = res.extra['meta'];
+    if (ekstra is Map) return Map<String, dynamic>.from(ekstra);
+    final body = res.data;
+    if (body is Map && body['meta'] is Map) {
+      return Map<String, dynamic>.from(body['meta'] as Map);
+    }
+    return const {};
+  }
+
+  int _metaInt(Map<String, dynamic> meta, List<String> kunci, int bawaan) {
+    for (final k in kunci) {
+      final nilai = meta[k];
+      if (nilai is int) return nilai;
+      if (nilai is num) return nilai.toInt();
+      if (nilai is String) {
+        final parsed = int.tryParse(nilai);
+        if (parsed != null) return parsed;
+      }
+    }
+    return bawaan;
   }
 }
