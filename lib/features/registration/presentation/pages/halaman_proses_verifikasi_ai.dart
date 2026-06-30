@@ -70,7 +70,7 @@ class _HalamanProsesVerifikasiAiState
                 const Spacer(flex: 3),
                 Center(
                   child: LoadingAnimationWidget.fourRotatingDots(
-                    color: Warna.merahUtama,
+                    color: Warna.primer,
                     size: 64,
                   ),
                 ),
