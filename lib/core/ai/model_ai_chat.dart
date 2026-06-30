@@ -18,7 +18,8 @@ class AksiAi {
   factory AksiAi.dariJson(Map<String, dynamic> json) {
     return AksiAi(
       tipe: _tipeDari(
-          json['tipe']?.toString() ?? json['type']?.toString() ?? ''),
+        json['tipe']?.toString() ?? json['type']?.toString() ?? '',
+      ),
       label: json['label']?.toString() ?? '',
       target: json['target']?.toString(),
     );
@@ -50,10 +51,10 @@ class AksiAi {
   }
 
   Map<String, dynamic> toJson() => {
-        'tipe': tipe.name,
-        'label': label,
-        if (target != null) 'target': target,
-      };
+    'tipe': tipe.name,
+    'label': label,
+    if (target != null) 'target': target,
+  };
 }
 
 class HasilBalasanAi {
@@ -91,17 +92,86 @@ class HasilBalasanAi {
       latensiMs: (json['latensi_ms'] as num?)?.toInt(),
       aksi: aksiRaw is List
           ? aksiRaw
-              .whereType<Map>()
-              .map((e) => AksiAi.dariJson(Map<String, dynamic>.from(e)))
-              .where((a) => a.label.isNotEmpty)
-              .toList()
+                .whereType<Map>()
+                .map((e) => AksiAi.dariJson(Map<String, dynamic>.from(e)))
+                .where((a) => a.label.isNotEmpty)
+                .toList()
           : const [],
       saran: saranRaw is List
-          ? saranRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList()
+          ? saranRaw
+                .map((e) => e.toString())
+                .where((s) => s.isNotEmpty)
+                .toList()
           : const [],
-      butuhOperator: json['butuh_operator'] == true ||
+      butuhOperator:
+          json['butuh_operator'] == true ||
           json['needs_human'] == true ||
           json['escalate'] == true,
+    );
+  }
+}
+
+class HasilKirimAi {
+  const HasilKirimAi({
+    required this.sesiId,
+    this.pesanId,
+    this.status = 'pending',
+    this.mengetik = true,
+    this.stream = false,
+    this.balasanLangsung,
+  });
+
+  final String sesiId;
+  final String? pesanId;
+  final String status;
+  final bool mengetik;
+  final bool stream;
+  final String? balasanLangsung;
+
+  bool get adaBalasanLangsung =>
+      balasanLangsung != null && balasanLangsung!.trim().isNotEmpty;
+
+  factory HasilKirimAi.dariJson(Map<String, dynamic> json) {
+    final langsung = (json['balasan'] ?? json['isi']);
+    return HasilKirimAi(
+      sesiId: json['sesi_id'] as String? ?? '',
+      pesanId:
+          (json['pesan_id_assistant'] ?? json['pesan_id'] ?? json['id'])
+              ?.toString(),
+      status: json['status'] as String? ?? 'pending',
+      mengetik: json['mengetik'] != false,
+      stream: json['stream'] == true,
+      balasanLangsung: langsung is String ? langsung : null,
+    );
+  }
+}
+
+class HasilPesanAi {
+  const HasilPesanAi({
+    required this.balasan,
+    required this.status,
+    required this.mengetik,
+    required this.selesai,
+    required this.gagal,
+    this.errorPesan,
+  });
+
+  final String balasan;
+  final String status;
+  final bool mengetik;
+  final bool selesai;
+  final bool gagal;
+  final String? errorPesan;
+
+  factory HasilPesanAi.dariJson(Map<String, dynamic> json) {
+    final teks = (json['balasan'] ?? json['isi']);
+    return HasilPesanAi(
+      balasan: teks is String ? teks : '',
+      status: json['status'] as String? ?? '',
+      mengetik: json['mengetik'] == true,
+      selesai: json['selesai'] == true || json['status'] == 'selesai',
+      gagal: json['gagal'] == true || json['status'] == 'gagal',
+      errorPesan: json['error_pesan'] as String?,
     );
   }
 }
@@ -117,7 +187,9 @@ class PesanAi {
     this.terjadiGalat = false,
     this.pesanGalat,
     this.aksi = const [],
+    this.saran = const [],
     this.butuhOperator = false,
+    this.detikCobaUlang,
   });
 
   final PeranPesanAi peran;
@@ -127,19 +199,23 @@ class PesanAi {
   final bool terjadiGalat;
   final String? pesanGalat;
   final List<AksiAi> aksi;
+  final List<String> saran;
   final bool butuhOperator;
+  final int? detikCobaUlang;
 
   Map<String, dynamic> toJson() => {
-        'peran': peran.name,
-        'isi': isi,
-        'dibuat_pada': dibuatPada.toIso8601String(),
-        'selesai': selesai,
-        if (aksi.isNotEmpty) 'aksi': aksi.map((a) => a.toJson()).toList(),
-        if (butuhOperator) 'butuh_operator': true,
-      };
+    'peran': peran.name,
+    'isi': isi,
+    'dibuat_pada': dibuatPada.toIso8601String(),
+    'selesai': selesai,
+    if (aksi.isNotEmpty) 'aksi': aksi.map((a) => a.toJson()).toList(),
+    if (saran.isNotEmpty) 'saran': saran,
+    if (butuhOperator) 'butuh_operator': true,
+  };
 
   factory PesanAi.dariJson(Map<String, dynamic> json) {
     final aksiRaw = json['aksi'];
+    final saranRaw = json['saran'];
     return PesanAi(
       peran: PeranPesanAi.values.firstWhere(
         (p) => p.name == json['peran'],
@@ -148,13 +224,19 @@ class PesanAi {
       isi: json['isi']?.toString() ?? '',
       dibuatPada:
           DateTime.tryParse(json['dibuat_pada']?.toString() ?? '') ??
-              DateTime.now(),
+          DateTime.now(),
       selesai: json['selesai'] != false,
       aksi: aksiRaw is List
           ? aksiRaw
-              .whereType<Map>()
-              .map((e) => AksiAi.dariJson(Map<String, dynamic>.from(e)))
-              .toList()
+                .whereType<Map>()
+                .map((e) => AksiAi.dariJson(Map<String, dynamic>.from(e)))
+                .toList()
+          : const [],
+      saran: saranRaw is List
+          ? saranRaw
+                .map((e) => e.toString())
+                .where((s) => s.isNotEmpty)
+                .toList()
           : const [],
       butuhOperator: json['butuh_operator'] == true,
     );
