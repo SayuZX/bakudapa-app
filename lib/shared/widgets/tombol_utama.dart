@@ -24,7 +24,7 @@ class TombolUtama extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nonaktif = saatTekan == null || memuat;
-    final latar = bahaya ? Warna.bahaya : Warna.merahUtama;
+    final latar = bahaya ? Warna.bahaya : Warna.primer;
 
     final isi = memuat
         ? const SizedBox(
