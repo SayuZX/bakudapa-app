@@ -35,8 +35,8 @@ class Kartu extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: saatKetuk,
-        splashColor: Warna.merahLembut,
-        highlightColor: Warna.merahLembut,
+        splashColor: Warna.primerLembut,
+        highlightColor: Warna.primerLembut,
         child: Padding(padding: pengisi, child: anak),
       ),
     );
