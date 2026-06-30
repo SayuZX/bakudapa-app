@@ -45,7 +45,7 @@ class HalamanIntroLiveness extends ConsumerWidget {
         child: FilledButton(
           onPressed: () => context.push(NamaRute.daftarKameraLiveness),
           style: FilledButton.styleFrom(
-            backgroundColor: Warna.merahUtama,
+            backgroundColor: Warna.primer,
             foregroundColor: Colors.white,
             shape: const StadiumBorder(),
             textStyle: const TextStyle(
