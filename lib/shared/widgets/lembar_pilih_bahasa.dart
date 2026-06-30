@@ -135,7 +135,7 @@ class _IsiLembarPilihBahasaState extends ConsumerState<_IsiLembarPilihBahasa> {
               child: FilledButton(
                 onPressed: ubahan ? _terapkan : null,
                 style: FilledButton.styleFrom(
-                  backgroundColor: Warna.merahUtama,
+                  backgroundColor: Warna.primer,
                   disabledBackgroundColor: Warna.netral200,
                   foregroundColor: Colors.white,
                   disabledForegroundColor: Warna.teksKetiga,
@@ -236,7 +236,7 @@ class _RadioIndikator extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: terpilih ? Warna.merahUtama : Warna.netral300,
+          color: terpilih ? Warna.primer : Warna.netral300,
           width: terpilih ? 6 : 1.6,
         ),
         color: terpilih ? Colors.white : Colors.transparent,
