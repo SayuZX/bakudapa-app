@@ -89,6 +89,16 @@ class Validasi {
     return null;
   }
 
+  static String? username(String? nilai) {
+    final t = _t();
+    final v = (nilai ?? '').trim();
+    if (v.isEmpty) return t.wajibDiisi(t.usernameLabel);
+    if (v.length < 4 || v.length > 20) return t.usernamePanjang;
+    if (!RegExp(r'^[a-z0-9][a-z0-9._]*$').hasMatch(v)) return t.usernameFormat;
+    if (!RegExp(r'[a-z]').hasMatch(v)) return t.usernameWajibHuruf;
+    return null;
+  }
+
   static String? konfirmasiKataSandi(String? nilai, String asli) {
     final t = _t();
     if (nilai == null || nilai.isEmpty) {
