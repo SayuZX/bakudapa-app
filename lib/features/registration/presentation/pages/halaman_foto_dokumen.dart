@@ -197,7 +197,7 @@ class _HalamanFotoDokumenState extends ConsumerState<HalamanFotoDokumen>
                       : !_siap || _kontroler == null
                           ? const Center(
                               child: CircularProgressIndicator(
-                                color: Warna.merahUtama, strokeWidth: 2.4),
+                                color: Warna.primer, strokeWidth: 2.4),
                             )
                           : BingkaiKameraDokumen(
                               anak: PratinjauKameraIsi(kontroler: _kontroler!),
@@ -240,12 +240,12 @@ class _BarisAmbil extends StatelessWidget {
           width: 76,
           height: 76,
           decoration: BoxDecoration(
-            color: Warna.merahUtama,
+            color: Warna.primer,
             shape: BoxShape.circle,
             border: Border.all(color: Warna.permukaan, width: 4),
             boxShadow: [
               BoxShadow(
-                color: Warna.merahUtama.withValues(alpha: 0.3),
+                color: Warna.primer.withValues(alpha: 0.3),
                 blurRadius: 18,
                 offset: const Offset(0, 6),
               ),
@@ -306,7 +306,7 @@ class _BarisLanjut extends ConsumerWidget {
             child: FilledButton(
               onPressed: memuat ? null : saatLanjut,
               style: FilledButton.styleFrom(
-                backgroundColor: Warna.merahUtama,
+                backgroundColor: Warna.primer,
                 foregroundColor: Colors.white,
                 shape: const StadiumBorder(),
                 textStyle: const TextStyle(
