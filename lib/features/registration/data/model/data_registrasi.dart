@@ -1,6 +1,5 @@
 import 'package:bakudapa_mobile/core/enums/jenis_kelamin.dart';
 
-import '../../../../core/biometric/model_hasil_biometrik.dart';
 import '../../../../core/liveness/model_tantangan_liveness.dart';
 
 export 'package:bakudapa_mobile/core/enums/jenis_kelamin.dart';
@@ -14,6 +13,12 @@ class IdentitasRegistrasi {
     this.jenisKelamin,
     this.noHp = '',
     this.surel = '',
+    this.kabupatenKode = '',
+    this.kabupatenNama = '',
+    this.kecamatanKode = '',
+    this.kecamatanNama = '',
+    this.desaKode = '',
+    this.desaNama = '',
   });
 
   final String nomorIdentitas;
@@ -23,6 +28,12 @@ class IdentitasRegistrasi {
   final JenisKelamin? jenisKelamin;
   final String noHp;
   final String surel;
+  final String kabupatenKode;
+  final String kabupatenNama;
+  final String kecamatanKode;
+  final String kecamatanNama;
+  final String desaKode;
+  final String desaNama;
 
   IdentitasRegistrasi salin({
     String? nomorIdentitas,
@@ -32,6 +43,12 @@ class IdentitasRegistrasi {
     JenisKelamin? jenisKelamin,
     String? noHp,
     String? surel,
+    String? kabupatenKode,
+    String? kabupatenNama,
+    String? kecamatanKode,
+    String? kecamatanNama,
+    String? desaKode,
+    String? desaNama,
   }) {
     return IdentitasRegistrasi(
       nomorIdentitas: nomorIdentitas ?? this.nomorIdentitas,
@@ -41,19 +58,34 @@ class IdentitasRegistrasi {
       jenisKelamin: jenisKelamin ?? this.jenisKelamin,
       noHp: noHp ?? this.noHp,
       surel: surel ?? this.surel,
+      kabupatenKode: kabupatenKode ?? this.kabupatenKode,
+      kabupatenNama: kabupatenNama ?? this.kabupatenNama,
+      kecamatanKode: kecamatanKode ?? this.kecamatanKode,
+      kecamatanNama: kecamatanNama ?? this.kecamatanNama,
+      desaKode: desaKode ?? this.desaKode,
+      desaNama: desaNama ?? this.desaNama,
     );
   }
 
   Map<String, Object?> toJson() => {
-        'user_type': 'WNI',
-        'identity_number': nomorIdentitas,
-        'full_name': namaLengkap,
-        'birth_date': tanggalLahir?.toIso8601String(),
-        'birth_place': tempatLahir,
-        'gender': jenisKelamin?.value,
-        'phone_number': noHp,
+        'nik': nomorIdentitas,
+        'nama_lengkap': namaLengkap,
+        'tanggal_lahir':
+            tanggalLahir == null ? null : _tanggal(tanggalLahir!),
+        'tempat_lahir': tempatLahir,
+        'jenis_kelamin': jenisKelamin?.value,
+        'no_hp': noHp,
         'email': surel,
+        'kabupaten_kode': kabupatenKode,
+        'kecamatan_kode': kecamatanKode,
+        'desa_kode': desaKode,
       };
+
+  static String _tanggal(DateTime t) {
+    final bln = t.month.toString().padLeft(2, '0');
+    final hari = t.day.toString().padLeft(2, '0');
+    return '${t.year}-$bln-$hari';
+  }
 }
 
 class PersetujuanKebijakan {
@@ -63,6 +95,7 @@ class PersetujuanKebijakan {
     this.penafian = false,
     this.biometrik = false,
     this.kebenaranData = false,
+    this.versi = const {},
   });
 
   final bool privasi;
@@ -70,6 +103,7 @@ class PersetujuanKebijakan {
   final bool penafian;
   final bool biometrik;
   final bool kebenaranData;
+  final Map<String, String> versi;
 
   bool get semua => privasi && layanan && penafian && biometrik && kebenaranData;
 
@@ -79,6 +113,7 @@ class PersetujuanKebijakan {
     bool? penafian,
     bool? biometrik,
     bool? kebenaranData,
+    Map<String, String>? versi,
   }) {
     return PersetujuanKebijakan(
       privasi: privasi ?? this.privasi,
@@ -86,15 +121,16 @@ class PersetujuanKebijakan {
       penafian: penafian ?? this.penafian,
       biometrik: biometrik ?? this.biometrik,
       kebenaranData: kebenaranData ?? this.kebenaranData,
+      versi: versi ?? this.versi,
     );
   }
 
   Map<String, bool> toJson() => {
-        'privacy': privasi,
-        'service': layanan,
-        'disclaimer': penafian,
-        'biometric': biometrik,
-        'data_truth': kebenaranData,
+        'privasi': privasi,
+        'layanan': layanan,
+        'penafian': penafian,
+        'biometrik': biometrik,
+        'kebenaran_data': kebenaranData,
       };
 }
 
@@ -130,10 +166,7 @@ class SesiRegistrasi {
     this.jalurVideoLiveness,
     this.tantanganLiveness = const [],
     this.tangkapanTantangan = const [],
-    this.kalimatSuara,
-    this.kodeSuara,
-    this.jalurAudioSuara,
-    this.hasilSidikJari,
+    this.kodeTantanganLivenessServer,
     this.persetujuan = const PersetujuanKebijakan(),
     this.mulaiPada,
   });
@@ -145,10 +178,7 @@ class SesiRegistrasi {
   final String? jalurVideoLiveness;
   final List<TantanganLiveness> tantanganLiveness;
   final List<TangkapTantangan> tangkapanTantangan;
-  final String? kalimatSuara;
-  final String? kodeSuara;
-  final String? jalurAudioSuara;
-  final HasilBiometrikSidikJari? hasilSidikJari;
+  final String? kodeTantanganLivenessServer;
   final PersetujuanKebijakan persetujuan;
   final DateTime? mulaiPada;
 
@@ -164,10 +194,7 @@ class SesiRegistrasi {
     String? jalurVideoLiveness,
     List<TantanganLiveness>? tantanganLiveness,
     List<TangkapTantangan>? tangkapanTantangan,
-    String? kalimatSuara,
-    String? kodeSuara,
-    String? jalurAudioSuara,
-    HasilBiometrikSidikJari? hasilSidikJari,
+    String? kodeTantanganLivenessServer,
     PersetujuanKebijakan? persetujuan,
     DateTime? mulaiPada,
   }) {
@@ -179,10 +206,8 @@ class SesiRegistrasi {
       jalurVideoLiveness: jalurVideoLiveness ?? this.jalurVideoLiveness,
       tantanganLiveness: tantanganLiveness ?? this.tantanganLiveness,
       tangkapanTantangan: tangkapanTantangan ?? this.tangkapanTantangan,
-      kalimatSuara: kalimatSuara ?? this.kalimatSuara,
-      kodeSuara: kodeSuara ?? this.kodeSuara,
-      jalurAudioSuara: jalurAudioSuara ?? this.jalurAudioSuara,
-      hasilSidikJari: hasilSidikJari ?? this.hasilSidikJari,
+      kodeTantanganLivenessServer:
+          kodeTantanganLivenessServer ?? this.kodeTantanganLivenessServer,
       persetujuan: persetujuan ?? this.persetujuan,
       mulaiPada: mulaiPada ?? this.mulaiPada,
     );
