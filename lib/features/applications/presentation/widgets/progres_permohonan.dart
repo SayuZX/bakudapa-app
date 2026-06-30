@@ -36,14 +36,24 @@ class ProgresPermohonan extends StatelessWidget {
         latar: Warna.bahayaLembut,
         ikon: HugeIcons.strokeRoundedCancelCircle,
         judul: status.label,
-        catatan: permohonan.catatan,
+        catatan: permohonan.alasanPenolakan ?? permohonan.catatan,
       );
     }
-    if (status == StatusPermohonan.tertunda) {
+    if (status == StatusPermohonan.tertunda ||
+        status == StatusPermohonan.perluPerbaikan) {
       return _Khusus(
         warna: Warna.peringatan,
         latar: Warna.peringatanLembut,
         ikon: HugeIcons.strokeRoundedAlert02,
+        judul: status.label,
+        catatan: permohonan.catatan,
+      );
+    }
+    if (status == StatusPermohonan.dibatalkan) {
+      return _Khusus(
+        warna: Warna.netral500,
+        latar: Warna.netral100,
+        ikon: HugeIcons.strokeRoundedCancelCircle,
         judul: status.label,
         catatan: permohonan.catatan,
       );
@@ -101,7 +111,7 @@ class _Node extends StatelessWidget {
               child: tampilkanKiri
                   ? Container(
                       height: 3,
-                      color: garisKiriAktif ? Warna.merahUtama : Warna.garis,
+                      color: garisKiriAktif ? Warna.primer : Warna.garis,
                     )
                   : const SizedBox(),
             ),
@@ -109,10 +119,10 @@ class _Node extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: tercapai ? Warna.merahUtama : Warna.permukaan,
+                color: tercapai ? Warna.primer : Warna.permukaan,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: tercapai ? Warna.merahUtama : Warna.garisTegas,
+                  color: tercapai ? Warna.primer : Warna.garisTegas,
                   width: 1.5,
                 ),
               ),
@@ -126,7 +136,7 @@ class _Node extends StatelessWidget {
               child: tampilkanKanan
                   ? Container(
                       height: 3,
-                      color: garisKananAktif ? Warna.merahUtama : Warna.garis,
+                      color: garisKananAktif ? Warna.primer : Warna.garis,
                     )
                   : const SizedBox(),
             ),
