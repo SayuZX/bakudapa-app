@@ -10,11 +10,13 @@ class PemuatKerlip extends StatelessWidget {
     this.lebar,
     this.tinggi = 16,
     this.sudut = 8,
+    this.lingkaran = false,
   });
 
   final double? lebar;
   final double tinggi;
   final double sudut;
+  final bool lingkaran;
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +25,12 @@ class PemuatKerlip extends StatelessWidget {
       highlightColor: Warna.kerlipSorot,
       period: const Duration(milliseconds: 1400),
       child: Container(
-        width: lebar,
+        width: lingkaran ? tinggi : lebar,
         height: tinggi,
         decoration: BoxDecoration(
           color: Warna.kerlipDasar,
-          borderRadius: BorderRadius.circular(sudut),
+          shape: lingkaran ? BoxShape.circle : BoxShape.rectangle,
+          borderRadius: lingkaran ? null : BorderRadius.circular(sudut),
         ),
       ),
     );
