@@ -1,10 +1,14 @@
-import 'package:dio/dio.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/activity/jenis_aktivitas.dart';
+import '../../core/activity/layanan_pencatat_aktivitas.dart';
 import '../../core/config/storage_keys.dart';
 import '../../core/network/klien_jaringan.dart';
+import 'penyedia_repositori.dart';
 
 enum KodeBahasa {
   id('id', 'ID', 'Bahasa Indonesia'),
@@ -24,9 +28,11 @@ enum KodeBahasa {
 }
 
 class PengaturBahasa extends StateNotifier<KodeBahasa> {
-  PengaturBahasa() : super(KodeBahasa.id) {
+  PengaturBahasa(this._ref) : super(KodeBahasa.id) {
     _pulihkan();
   }
+
+  final Ref _ref;
 
   Future<void> _pulihkan() async {
     final prefs = await SharedPreferences.getInstance();
@@ -40,22 +46,19 @@ class PengaturBahasa extends StateNotifier<KodeBahasa> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(StorageKeys.bahasaPilihan, baru.kode);
     KlienJaringan.instance.aturBahasa(baru.kode);
-    await _sinkronkanKeServer(baru.kode);
-  }
-
-  Future<void> _sinkronkanKeServer(String kode) async {
-    try {
-      await KlienJaringan.instance.dio.put(
-        '/profil/bahasa',
-        data: {'bahasa': kode},
-        options: Options(
-          sendTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 5),
-        ),
-      );
-    } catch (_) {}
+    unawaited(
+      LayananPencatatAktivitas.instance.catat(
+        JenisAktivitas.ubahBahasa,
+        metadata: {'bahasa': baru.kode},
+      ),
+    );
+    unawaited(
+      _ref.read(penyediaRepositoriProfil).gantiBahasa(baru.kode).catchError(
+            (_) {},
+          ),
+    );
   }
 }
 
-final penyediaBahasa =
-    StateNotifierProvider<PengaturBahasa, KodeBahasa>((ref) => PengaturBahasa());
+final penyediaBahasa = StateNotifierProvider<PengaturBahasa, KodeBahasa>(
+    (ref) => PengaturBahasa(ref));
