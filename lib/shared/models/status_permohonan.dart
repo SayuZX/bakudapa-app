@@ -1,10 +1,13 @@
 enum StatusPermohonan {
   menunggu('menunggu', 'Menunggu'),
-  diverifikasi('diverifikasi', 'Diverifikasi'),
+  diverifikasi('verified', 'Diverifikasi'),
   diproses('diproses', 'Diproses'),
-  tertunda('tertunda', 'Tertunda'),
+  menungguSiak('waiting_siak', 'Menunggu SIAK'),
+  tertunda('constrained', 'Tertunda'),
+  perluPerbaikan('perlu_perbaikan', 'Perlu Perbaikan'),
   ditolak('ditolak', 'Ditolak'),
-  selesai('selesai', 'Selesai');
+  selesai('selesai', 'Selesai'),
+  dibatalkan('dibatalkan', 'Dibatalkan');
 
   const StatusPermohonan(this.kode, this.label);
 
@@ -13,10 +16,18 @@ enum StatusPermohonan {
 
   static StatusPermohonan dariKode(String? kode) {
     if (kode == null) return StatusPermohonan.menunggu;
-    return StatusPermohonan.values.firstWhere(
-      (e) => e.kode == kode.toLowerCase(),
-      orElse: () => StatusPermohonan.menunggu,
-    );
+    final bersih = kode.toLowerCase().trim();
+    for (final status in StatusPermohonan.values) {
+      if (status.kode == bersih) return status;
+    }
+    switch (bersih) {
+      case 'pending':
+        return StatusPermohonan.tertunda;
+      case 'approved':
+        return StatusPermohonan.diproses;
+      default:
+        return StatusPermohonan.menunggu;
+    }
   }
 
   int get langkahLini {
@@ -26,15 +37,28 @@ enum StatusPermohonan {
       case StatusPermohonan.diverifikasi:
         return 1;
       case StatusPermohonan.diproses:
+      case StatusPermohonan.menungguSiak:
         return 2;
       case StatusPermohonan.selesai:
         return 3;
       case StatusPermohonan.tertunda:
+      case StatusPermohonan.perluPerbaikan:
       case StatusPermohonan.ditolak:
+      case StatusPermohonan.dibatalkan:
         return -1;
     }
   }
 
   bool get adalahFinal =>
-      this == StatusPermohonan.selesai || this == StatusPermohonan.ditolak;
+      this == StatusPermohonan.selesai ||
+      this == StatusPermohonan.ditolak ||
+      this == StatusPermohonan.dibatalkan;
+
+  bool get sedangBerjalan =>
+      this == StatusPermohonan.diverifikasi ||
+      this == StatusPermohonan.diproses ||
+      this == StatusPermohonan.menungguSiak;
+
+  bool get bisaDibatalkan =>
+      this == StatusPermohonan.menunggu || this == StatusPermohonan.tertunda;
 }
