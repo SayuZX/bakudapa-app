@@ -1,5 +1,3 @@
-// Lapisan kepemilikan — assembly AArch64 (arm64-v8a).
-// Fragmen seed identitas (SHA-256 string kepemilikan ter-obfuscate) di immediate movz/movk.
     .text
 
 .macro FRAG name, w0, w1, w2, w3
