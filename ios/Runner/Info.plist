@@ -10,8 +10,6 @@
 	<string>BAKUDAPA</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Akses kamera diperlukan untuk mengambil foto dokumen identitas, foto wajah, dan video verifikasi liveness saat registrasi.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Akses mikrofon diperlukan untuk merekam suara verifikasi pada saat registrasi akun BAKUDAPA MOBILE.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Akses galeri diperlukan untuk memilih foto dokumen pendukung.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -26,6 +24,8 @@
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
 	</dict>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
@@ -33,6 +33,17 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>id.go.malutprov.bakudapa</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>bakudapa</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleName</key>
 	<string>bakudapa_mobile</string>
 	<key>CFBundlePackageType</key>
