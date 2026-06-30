@@ -18,4 +18,7 @@ class StorageKeys {
   static const String notifikasiAktif = 'bakudapa_pref_notifikasi';
   static const String terakhirSinkron = 'bakudapa_pref_sinkron_terakhir';
   static const String panduanTerlihat = 'bakudapa_pref_panduan';
+  static const String aktivitasLokasiIzin = 'bakudapa_pref_aktivitas_lokasi';
+  static const String aktivitasAntre = 'bakudapa_aktivitas_antre';
+  static const String aktivitasPerangkatId = 'bakudapa_aktivitas_perangkat_id';
 }
