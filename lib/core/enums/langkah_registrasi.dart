@@ -3,10 +3,8 @@ enum LangkahRegistrasi {
   fotoDokumen('foto_dokumen', 2, 'Foto Dokumen'),
   fotoWajah('foto_wajah', 3, 'Foto Wajah'),
   liveness('liveness', 4, 'Liveness'),
-  suara('suara', 5, 'Suara'),
-  sidikJari('sidik_jari', 6, 'Sidik Jari'),
-  kebijakan('kebijakan', 7, 'Persetujuan Kebijakan'),
-  selesai('selesai', 7, 'Selesai');
+  kebijakan('kebijakan', 5, 'Persetujuan Kebijakan'),
+  selesai('selesai', 5, 'Selesai');
 
   const LangkahRegistrasi(this.value, this.urutan, this.labelId);
   final String value;
@@ -16,5 +14,5 @@ enum LangkahRegistrasi {
   static LangkahRegistrasi fromString(String? raw) =>
       values.firstWhere((e) => e.value == raw, orElse: () => identitas);
 
-  static const int total = 7;
+  static const int total = 5;
 }
