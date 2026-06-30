@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/localization/teks.dart';
 import '../../core/theme/dimensi.dart';
 import '../../core/theme/warna.dart';
 import '../models/status_permohonan.dart';
 
-class LencanaStatus extends StatelessWidget {
+class LencanaStatus extends ConsumerWidget {
   const LencanaStatus({
     super.key,
     required this.status,
@@ -15,7 +17,8 @@ class LencanaStatus extends StatelessWidget {
   final bool kompak;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(teksProvider);
     final nada = _nada(status);
 
     return Container(
@@ -37,7 +40,7 @@ class LencanaStatus extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            status.label,
+            t.katalog(status.label),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: nada.depan,
                   fontWeight: FontWeight.w700,
@@ -55,11 +58,15 @@ class LencanaStatus extends StatelessWidget {
         return const _Nada(Warna.tundaLembut, Warna.tunda);
       case StatusPermohonan.diverifikasi:
       case StatusPermohonan.diproses:
+      case StatusPermohonan.menungguSiak:
         return const _Nada(Warna.infoLembut, Warna.info);
       case StatusPermohonan.tertunda:
+      case StatusPermohonan.perluPerbaikan:
         return const _Nada(Warna.peringatanLembut, Warna.peringatan);
       case StatusPermohonan.ditolak:
         return const _Nada(Warna.bahayaLembut, Warna.bahaya);
+      case StatusPermohonan.dibatalkan:
+        return const _Nada(Warna.netral100, Warna.netral500);
       case StatusPermohonan.selesai:
         return const _Nada(Warna.suksesLembut, Warna.sukses);
     }
