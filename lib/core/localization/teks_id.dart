@@ -34,8 +34,6 @@ class TeksId extends Teks {
   @override
   String get langkahAiAnalisisLiveness => 'Memverifikasi liveness...';
   @override
-  String get langkahAiAnalisisSuara => 'Memvalidasi rekaman suara...';
-  @override
   String get langkahAiMenyelesaikan => 'Menyimpan hasil verifikasi...';
   @override
   String get jangantutupHalamanIni =>
@@ -184,17 +182,6 @@ class TeksId extends Teks {
   @override
   String get aksesKameraDitolak => 'Akses Kamera Ditolak';
   @override
-  String get verifikasiSuara => 'Verifikasi Suara';
-  @override
-  String get ucapkanKalimatBerikut => 'Ucapkan kalimat berikut';
-  @override
-  String get tekanTombolRekam =>
-      'Tekan tombol rekam, lalu ucapkan kalimat di bawah dengan suara jelas.';
-  @override
-  String get rekamanTersedia => 'Rekaman tersedia';
-  @override
-  String get lanjutKeReview => 'Lanjut ke Review';
-  @override
   String get verifikasiSidikJari => 'Verifikasi Sidik Jari';
   @override
   String get masukDenganBiometrik => 'Masuk dengan Biometrik';
@@ -241,6 +228,12 @@ class TeksId extends Teks {
   String get gulirSampaiAkhir =>
       'Gulir sampai akhir untuk mengaktifkan tombol setuju.';
   @override
+  String get berlakuSejak => 'Berlaku sejak';
+  @override
+  String get versiLabel => 'Versi';
+  @override
+  String get gagalMemuatKebijakan => 'Gagal memuat kebijakan.';
+  @override
   String get verifikasiBerhasilDikirim => 'Verifikasi Berhasil Dikirim';
   @override
   String get menungguVerifikasiOperator => 'Menunggu Verifikasi Operator';
@@ -256,6 +249,21 @@ class TeksId extends Teks {
   String get menyiapkan => 'Menyiapkan';
   @override
   String get aktif => 'Aktif';
+  @override
+  String get aktivitasLokasiJudul => 'Lokasi untuk log aktivitas';
+  @override
+  String get aktivitasLokasiSub =>
+      'Bantu deteksi penyalahgunaan saat mengirim permohonan';
+  @override
+  String get aktivitasLokasiPenjelasan =>
+      'Bila diaktifkan, lokasi perkiraan Anda disertakan pada sebagian aktivitas '
+      '(mis. saat mengirim permohonan) semata untuk tujuan keamanan, audit, dan '
+      'deteksi penyalahgunaan sesuai Kebijakan Privasi. Lokasi tidak diambil di '
+      'latar belakang dan Anda dapat menonaktifkannya kapan saja. Bila izin ditolak, '
+      'aplikasi tetap berfungsi normal tanpa lokasi.';
+  @override
+  String get aktivitasLokasiDitolak =>
+      'Izin lokasi belum diberikan. Aktifkan izin lokasi di pengaturan perangkat bila ingin menyertakan lokasi.';
   @override
   String get cariWajah => 'Cari wajah';
   @override
@@ -323,7 +331,7 @@ class TeksId extends Teks {
   @override
   String get kodeTerkirimUlang => 'Kode verifikasi telah dikirim ulang.';
   @override
-  String get tidakMenerimaSms => 'Tidak menerima SMS? ';
+  String get tidakMenerimaSms => 'Tidak menerima email? ';
   @override
   String get kirimKodeLewatEmail => 'Kirim kode lewat email';
   @override
@@ -332,7 +340,62 @@ class TeksId extends Teks {
   String kirimUlangDalam(int detik) => 'Kirim ulang dalam ${detik}s';
   @override
   String silakanPeriksaSmsKe(String tujuan) =>
-      'Silakan periksa SMS Anda dan masukkan kode 6 digit yang kami kirimkan ke $tujuan';
+      'Silakan periksa email Anda dan masukkan kode 6 digit yang kami kirimkan ke $tujuan';
+  @override
+  String get fiturTidakTersediaJudul => 'Fitur Tidak Tersedia';
+  @override
+  String get fiturTidakTersediaSementara =>
+      'Fitur ini tidak tersedia sementara waktu.';
+  @override
+  String get buatKredensialJudul => 'Buat Username & Kata Sandi';
+  @override
+  String get buatKredensialSub =>
+      'Akun Anda sudah aktif. Buat username dan kata sandi untuk masuk berikutnya.';
+  @override
+  String get usernameLabel => 'Username';
+  @override
+  String get usernamePetunjuk => 'Pilih username Anda';
+  @override
+  String get usernamePanjang => 'Username harus 4–20 karakter.';
+  @override
+  String get usernameFormat =>
+      'Gunakan huruf kecil, angka, titik, atau garis bawah; diawali huruf atau angka.';
+  @override
+  String get usernameWajibHuruf => 'Username tidak boleh hanya angka.';
+  @override
+  String get usernameMemeriksa => 'Memeriksa ketersediaan…';
+  @override
+  String get usernameTersedia => 'Username tersedia';
+  @override
+  String get usernameTerpakai => 'Username sudah dipakai';
+  @override
+  String get syaratMin8 => 'Minimal 8 karakter';
+  @override
+  String get syaratHurufBesar => 'Mengandung huruf besar';
+  @override
+  String get syaratHurufKecil => 'Mengandung huruf kecil';
+  @override
+  String get syaratAngka => 'Mengandung angka';
+  @override
+  String get simpanLanjutkan => 'Simpan & Lanjutkan';
+  @override
+  String get kredensialBerhasil => 'Username & kata sandi berhasil dibuat.';
+  @override
+  String get tambahNik => 'Tambah NIK';
+  @override
+  String get tambahPerubahan => 'Tambah perubahan';
+  @override
+  String get nilaiBaru => 'Nilai baru';
+  @override
+  String get pilihElemen => 'Pilih elemen';
+  @override
+  String get unduhFormulirPdf => 'Unduh Formulir PDF';
+  @override
+  String get gagalUnduhFormulir => 'Gagal mengunduh formulir.';
+  @override
+  String get langkahPanduanJudul => 'Langkah Pengajuan';
+  @override
+  String get langkahPanduanSub => 'Ikuti langkah berikut untuk mengajukan.';
   @override
   String get kataSandiLabel => 'Kata sandi';
   @override
@@ -390,7 +453,7 @@ class TeksId extends Teks {
   String get subJudulIntroLiveness => 'Verifikasi Wajah Diperlukan';
   @override
   String get langkahIntroLiveness1Judul =>
-      'Kamera akan merekam selama ~10 detik';
+      'Kamera akan merekam selama ~5 detik';
   @override
   String get langkahIntroLiveness1Deskripsi =>
       'Berbeda dari langkah foto, di sini sistem mengambil video singkat untuk membaca pergerakan wajah Anda.';
@@ -401,10 +464,10 @@ class TeksId extends Teks {
   String get langkahIntroLiveness2Deskripsi =>
       'Selama merekam, wajah harus tetap berada di lingkaran panduan walaupun Anda menoleh atau mengangguk.';
   @override
-  String get langkahIntroLiveness3Judul => 'Ikuti tiga instruksi gerakan acak';
+  String get langkahIntroLiveness3Judul => 'Ikuti satu instruksi gerakan acak';
   @override
   String get langkahIntroLiveness3Deskripsi =>
-      'Sistem meminta menoleh, mengangguk, atau menatap pusat. Setiap instruksi punya batas waktu beberapa detik.';
+      'Sistem meminta satu gerakan acak (mis. kedip, senyum, atau menoleh) dengan batas waktu beberapa detik.';
   @override
   String get langkahIntroLiveness4Judul => 'Untuk mencegah pemalsuan identitas';
   @override
@@ -457,6 +520,9 @@ class TeksId extends Teks {
   @override
   String get bersiapMengambilFoto => 'Bersiap mengambil foto';
   @override
+  String get lanjutkanSetelahVerifikasiWajah =>
+      'Lanjutkan untuk menyelesaikan verifikasi.';
+  @override
   String get instruksiUmumLiveness => 'Lakukan gerakan sesuai instruksi.';
   @override
   String get tahanStabil => 'Tahan stabil';
@@ -474,11 +540,6 @@ class TeksId extends Teks {
   @override
   String get gerakanTerdeteksiLanjut =>
       'Gerakan terdeteksi. Lanjut ke instruksi berikutnya.';
-  @override
-  String get lanjutkanKeVerifikasiSuara =>
-      'Lanjutkan ke verifikasi suara untuk menyelesaikan registrasi.';
-  @override
-  String sedangMerekamDetik(int detik) => 'Sedang merekam · $detik dtk';
   @override
   String get arahkanWajahDanIkutiInstruksi =>
       'Arahkan wajah ke tengah dan ikuti instruksi yang muncul.';
@@ -574,15 +635,7 @@ class TeksId extends Teks {
   @override
   String get izinMikrofonBelumDiberikan => 'Izin mikrofon belum diberikan.';
   @override
-  String get gagalMemulaiPerekamanSuara => 'Gagal memulai perekaman suara.';
-  @override
-  String get rekamanBelumTerdengarJelas =>
-      'Rekaman belum terdengar jelas. Silakan ulangi di tempat yang lebih tenang.';
-  @override
   String get kodeVerifikasi => 'KODE VERIFIKASI';
-  @override
-  String get rekamSuaraMinimal =>
-      'Rekam suara minimal 8 detik. Jangan ditutup dengan tangan.';
   @override
   String get tinjauDataPeriksa =>
       'Periksa kembali sebelum melanjutkan ke persetujuan kebijakan.';
@@ -596,8 +649,6 @@ class TeksId extends Teks {
   String get fotoWajahLabel => 'Foto wajah';
   @override
   String get videoLiveness => 'Video liveness';
-  @override
-  String get rekamanSuara => 'Rekaman suara';
   @override
   String get sidikJariLabel => 'Sidik jari';
   @override
@@ -644,7 +695,7 @@ class TeksId extends Teks {
       'Penafian ketersediaan layanan dan tanggung jawab penyelenggara.';
   @override
   String get pemrosesanDataBiometrikDeskripsi =>
-      'Persetujuan pemrosesan foto wajah, liveness, suara, dan sidik jari untuk verifikasi.';
+      'Persetujuan pemrosesan foto wajah, liveness, dan sidik jari untuk verifikasi.';
   @override
   String get pernyataanKebenaranDataDeskripsi =>
       'Pernyataan bahwa data yang dikirim benar dan dapat dipertanggungjawabkan.';
@@ -717,7 +768,7 @@ class TeksId extends Teks {
   @override
   String get andaTelahKeluar => 'Anda telah keluar dari aplikasi.';
   @override
-  String get versiAplikasi => 'Versi 1.0.0';
+  String get versiAplikasi => 'Versi Aplikasi';
   @override
   String get pengaturan => 'Pengaturan';
   @override
@@ -947,6 +998,8 @@ class TeksId extends Teks {
   @override
   String minimalKarakter(String label, int n) => '$label minimal $n karakter.';
   @override
+  String harusJumlahDigit(String label, int n) => '$label harus $n digit angka.';
+  @override
   String get kolomIniLabel => 'Kolom ini';
   @override
   String get nikHarus16Digit => 'NIK harus 16 digit.';
@@ -1038,6 +1091,20 @@ class TeksId extends Teks {
   @override
   String get keluarAplikasiLabel => 'Keluar Aplikasi';
   @override
+  String get maintenanceCobaSekarang => 'Coba Sekarang';
+  @override
+  String get maintenanceSegeraKembali => 'Kami akan segera kembali.';
+  @override
+  String get maintenanceSubPesan =>
+      'Ini pemeliharaan rutin untuk meningkatkan performa dan keamanan layanan.';
+  @override
+  String get maintenanceStatusAktif => 'Sedang pemeliharaan';
+  @override
+  String get maintenanceStatusMemeriksa => 'Memeriksa status…';
+  @override
+  String maintenanceTerakhirDiperiksa(String jam) =>
+      'Terakhir diperiksa $jam';
+  @override
   String get bahasaApaYangInginDigunakan =>
       'Bahasa apa yang ingin Anda gunakan?';
   @override
@@ -1051,6 +1118,9 @@ class TeksId extends Teks {
   @override
   String get bahasaBerhasilDiubah => 'Bahasa berhasil diubah.';
   @override
+  String get vpnAktifInformasi =>
+      'VPN terdeteksi aktif. Aktivitas tetap dicatat demi keamanan data Anda.';
+  @override
   String get asistenAi => 'Asisten AI';
   @override
   String get sapaanAi =>
@@ -1061,6 +1131,30 @@ class TeksId extends Teks {
   String get lanjutkanAi => 'Lanjutkan';
   @override
   String get mulaiSesiBaru => 'Mulai sesi baru';
+  @override
+  String sapaanWaktu(int jam, String? nama) {
+    final sapa = jam < 11
+        ? 'Selamat pagi'
+        : jam < 15
+        ? 'Selamat siang'
+        : jam < 19
+        ? 'Selamat sore'
+        : 'Selamat malam';
+    return nama == null || nama.isEmpty ? sapa : '$sapa, $nama';
+  }
+
+  @override
+  String get salinPesan => 'Salin';
+  @override
+  String get disalin => 'Disalin ke papan klip';
+  @override
+  String get regenerasi => 'Buat ulang';
+  @override
+  String get hentikan => 'Hentikan';
+  @override
+  String cobaLagiDalam(int detik) => 'Coba lagi dalam $detik detik';
+  @override
+  String get keBalasanTerbaru => 'Ke pesan terbaru';
   @override
   String get menyimpanIdentitas =>
       'Sedang menyimpan data identitas Anda. Mohon jangan menutup aplikasi.';
@@ -1082,9 +1176,6 @@ class TeksId extends Teks {
   String get mengunggahLiveness =>
       'Sedang mengunggah data verifikasi wajah. Mohon jangan menutup aplikasi.';
   @override
-  String get mengunggahSuara =>
-      'Sedang mengunggah rekaman suara Anda. Mohon jangan menutup aplikasi.';
-  @override
   String get mengirimSidikJari => 'Sedang mengirim verifikasi sidik jari Anda.';
   @override
   String get memverifikasiAkun => 'Sedang memverifikasi akun Anda.';
@@ -1104,6 +1195,8 @@ class TeksId extends Teks {
   String get instansiSingkat => 'Disdukcapil Maluku Utara';
   @override
   String get akunTerverifikasi => 'Terverifikasi';
+  @override
+  String get belumTerverifikasi => 'Belum terverifikasi';
   @override
   String get akunBelumTerverifikasi => 'Belum Terverifikasi';
   @override
@@ -1135,6 +1228,15 @@ class TeksId extends Teks {
   String get saranPindahDomisili => 'Bagaimana cara pindah domisili?';
   @override
   String get asistenMengetik => 'Asisten sedang mengetik…';
+  @override
+  String haloSapaan(String nama) => 'Halo, $nama';
+  @override
+  String get haloSapaanRingkas => 'Halo';
+  @override
+  String get butuhBantuanOperator =>
+      'Butuh bantuan lebih lanjut? Hubungi petugas Disdukcapil.';
+  @override
+  String get galatAiUmum => 'Maaf, terjadi gangguan. Silakan coba lagi.';
   @override
   String get menyiapkanKamera => 'Menyiapkan kamera…';
   @override
@@ -1193,19 +1295,463 @@ class TeksId extends Teks {
   @override
   String get simpanKataSandiBaru => 'Simpan Kata Sandi Baru';
   @override
-  String get tantanganSuaraKosongJudul => 'Kalimat verifikasi belum tersedia';
-  @override
-  String get tantanganSuaraKosongPesan =>
-      'Tantangan suara belum disiapkan oleh operator. Silakan hubungi Disdukcapil Provinsi Maluku Utara untuk melanjutkan registrasi.';
-  @override
-  String get tantanganSuaraGagalMuat =>
-      'Gagal memuat kalimat verifikasi. Silakan coba lagi.';
-  @override
-  String get tantanganSuaraBelumDimuat =>
-      'Kalimat verifikasi belum termuat. Silakan tunggu atau coba lagi.';
-  @override
-  String get rekamanBelumCocokKalimat =>
-      'Rekaman tampaknya belum sesuai dengan kalimat di atas. Ulangi dan ucapkan kalimat secara lengkap.';
-  @override
   String get hubungiDisdukcapilCta => 'Hubungi Disdukcapil';
+
+  @override
+  String katalog(String bawaan) => bawaan;
+  @override
+  List<String> daftarKatalog(List<String> bawaan) => bawaan;
+
+  @override
+  String? pesanKesalahan(String? kode) {
+    switch (kode) {
+      case 'JARINGAN':
+        return 'Periksa koneksi internet Anda.';
+      case 'BATAS_WAKTU':
+        return 'Permintaan terlalu lama. Silakan coba lagi.';
+      case 'TIDAK_BERWENANG':
+      case 'UNAUTHORIZED':
+        return 'Sesi Anda telah berakhir. Silakan masuk kembali.';
+      case 'DILARANG':
+      case 'FORBIDDEN':
+        return 'Anda tidak memiliki akses untuk tindakan ini.';
+      case 'TIDAK_DITEMUKAN':
+      case 'NOT_FOUND':
+        return 'Data tidak ditemukan.';
+      case 'BATAS_FREKUENSI':
+      case 'RATE_LIMITED':
+        return 'Terlalu banyak percobaan. Coba lagi nanti.';
+      case 'SERVER':
+      case 'INTERNAL_SERVER_ERROR':
+        return 'Layanan sedang bermasalah. Mohon coba kembali.';
+      case 'SIMPANAN':
+        return 'Gagal mengakses penyimpanan aman.';
+      case 'MAINTENANCE_MODE':
+        return 'Layanan sedang dalam pemeliharaan.';
+      case 'INVALID_CREDENTIALS':
+        return 'Identitas atau kata sandi salah.';
+      case 'ACCOUNT_BLOCKED':
+        return 'Akun terblokir sementara. Hubungi CS Bantuan.';
+      case 'CONFLICT':
+      case 'DUPLICATE_RECORD':
+        return 'Data sudah terdaftar.';
+      case 'AI_UNAVAILABLE':
+        return 'Asisten AI sedang tidak tersedia.';
+      case 'AI_ERROR':
+        return 'Layanan AI sedang terganggu.';
+      case 'VISION_ERROR':
+        return 'Analisis gambar gagal. Coba lagi nanti.';
+      case 'FACE_SERVICE_ERROR':
+        return 'Layanan verifikasi wajah sedang bermasalah.';
+      case 'FACE_PHOTO_BLOCKED':
+        return 'Percobaan foto wajah habis. Datang ke loket Disdukcapil untuk verifikasi langsung.';
+      case 'RESOURCE_EMPTY':
+        return 'Sumber data belum tersedia.';
+      case 'TAK_DIKENAL':
+        return 'Terjadi kesalahan tak terduga.';
+      default:
+        return null;
+    }
+  }
+
+  @override
+  String get sesiBerakhirJudul => 'Sesi Berakhir';
+  @override
+  String get sesiBerakhirPesan =>
+      'Sesi Anda telah berakhir untuk menjaga keamanan akun. Silakan masuk kembali untuk melanjutkan.';
+  @override
+  String get wargaMalut => 'Warga Maluku Utara';
+  @override
+  String get permohonanAnda => 'Permohonan Anda';
+  @override
+  String get totalPermohonanAktif => 'total permohonan aktif & selesai';
+  @override
+  String get labelMenunggu => 'Menunggu';
+  @override
+  String get labelDiproses => 'Diproses';
+  @override
+  String get labelSelesai => 'Selesai';
+  @override
+  String get layananKependudukan => 'Layanan Kependudukan';
+  @override
+  String get semua => 'Semua';
+  @override
+  String get permohonanTerakhir => 'Permohonan Terakhir';
+  @override
+  String get berandaGagalMuat =>
+      'Tidak dapat memuat permohonan. Tarik untuk menyegarkan.';
+  @override
+  String get berandaKosong =>
+      'Belum ada permohonan. Mulai ajukan layanan kependudukan pertama Anda.';
+  @override
+  String get pilihJalurPermohonan =>
+      'Pilih jalur permohonan sesuai kondisi anak.';
+  @override
+  String get jalurPunyaNik => 'Anak sudah memiliki NIK';
+  @override
+  String get jalurPunyaNikSub =>
+      'NIK anak sudah terdaftar dalam Kartu Keluarga.';
+  @override
+  String get jalurTanpaNik => 'Anak belum memiliki NIK';
+  @override
+  String get jalurTanpaNikSub =>
+      'NIK akan diterbitkan dalam proses pencatatan.';
+  @override
+  String get ajukanPermohonanBaru => 'Ajukan permohonan baru';
+  @override
+  String get filterBerjalan => 'Berjalan';
+  @override
+  String get filterPerluTindakan => 'Perlu Tindakan';
+  @override
+  String get filterBerakhir => 'Ditolak/Batal';
+  @override
+  String get riwayatKosongJudul => 'Belum Ada Permohonan';
+  @override
+  String get riwayatKosongPesan =>
+      'Ajukan permohonan layanan kependudukan pertama Anda dari menu Layanan.';
+  @override
+  String get tidakAdaData => 'Tidak Ada Data';
+  @override
+  String tanpaStatus(String label) =>
+      'Tidak ada permohonan dengan status ${label.toLowerCase()}.';
+  @override
+  String get gagalMuatRiwayat => 'Tidak dapat memuat riwayat permohonan.';
+  @override
+  String get memuatRiwayat => 'Memuat riwayat permohonan…';
+  @override
+  String get layananPermohonan => 'Layanan Permohonan';
+  @override
+  String get kelompokPencatatanSipil => 'Pencatatan Sipil';
+  @override
+  String get kelompokKartuKeluarga => 'Kartu Keluarga';
+  @override
+  String get kelompokIdentitasAnak => 'Identitas Anak';
+  @override
+  String get formulirResmi => 'Formulir Resmi';
+  @override
+  String get formulirResmiSub => 'Lihat atau unduh formulir untuk dipelajari.';
+  @override
+  String get persyaratanDokumen => 'Persyaratan Dokumen';
+  @override
+  String get persyaratanDokumenSub => 'Siapkan berkas berikut sebelum memulai.';
+  @override
+  String estimasiPengisian(int menit) => 'Estimasi pengisian ±$menit menit';
+  @override
+  String get persetujuanPermohonan =>
+      'Saya menyatakan data yang akan saya isi adalah benar dan saya menyetujui ketentuan layanan serta kebijakan privasi yang berlaku.';
+  @override
+  String get ketentuanLayananTaut => 'Ketentuan Layanan';
+  @override
+  String get mulaiPermohonan => 'Mulai Permohonan';
+  @override
+  String get dokumenBelumTersedia => 'Dokumen belum tersedia di server.';
+  @override
+  String get belumTersediaServer => 'Belum tersedia di server';
+  @override
+  String get takAdaPembukaPdf => 'Tidak ada aplikasi pembuka PDF di perangkat.';
+  @override
+  String get gagalUnduhDokumen => 'Gagal mengunduh dokumen.';
+  @override
+  String get unggahDokumenLangkah => 'Unggah Dokumen';
+  @override
+  String get ringkasanLangkah => 'Ringkasan';
+  @override
+  String get periksaIsian => 'Periksa kembali isian yang ditandai.';
+  @override
+  String get mengirimPermohonan => 'Mengirim Permohonan';
+  @override
+  String get mengunggahDokumenPesan => 'Mohon tunggu, dokumen sedang diunggah.';
+  @override
+  String get permohonanGagalKirim => 'Permohonan Gagal Dikirim';
+  @override
+  String get dataBelumValid => 'Data Belum Valid';
+  @override
+  String get batalkanPengisianJudul => 'Batalkan Pengisian?';
+  @override
+  String get batalkanPengisianPesan => 'Data yang sudah Anda isi akan hilang.';
+  @override
+  String get yaKeluar => 'Ya, keluar';
+  @override
+  String get lanjutMengisi => 'Lanjut mengisi';
+  @override
+  String get permohonanDiproses => 'Permohonan sedang diproses. Mohon tunggu.';
+  @override
+  String get infoUnggahDokumen =>
+      'Pastikan dokumen terbaca jelas. Format JPG, PNG, atau PDF dengan ukuran maksimal 5MB per berkas.';
+  @override
+  String get periksaSebelumKirim => 'Periksa kembali sebelum mengirim';
+  @override
+  String get periksaSebelumKirimSub =>
+      'Permohonan yang sudah terkirim akan diverifikasi petugas Disdukcapil.';
+  @override
+  String get dokumenTerunggah => 'Dokumen Terunggah';
+  @override
+  String get belumDiunggah => 'Belum diunggah';
+  @override
+  String get angkaTidakValid => 'Masukkan angka yang valid.';
+  @override
+  String minimalNilai(String nilai) => 'Minimal $nilai.';
+  @override
+  String maksimalNilai(String nilai) => 'Maksimal $nilai.';
+  @override
+  String pilihLabel(String label) => 'Pilih $label';
+  @override
+  String get biodataWajibLengkap =>
+      'Pilih data biodata yang diubah dan isi nilai lama serta baru.';
+  @override
+  String get ketukUnggahFormat =>
+      'Ketuk untuk unggah · JPG, PNG, PDF (maks 5MB)';
+  @override
+  String get ambilFotoKamera => 'Ambil foto dengan kamera';
+  @override
+  String get pilihDariGaleri => 'Pilih dari galeri';
+  @override
+  String get pilihBerkasPdf => 'Pilih berkas (PDF)';
+  @override
+  String get gagalPilihBerkas => 'Gagal memilih berkas. Coba lagi.';
+  @override
+  String get elemenDataDiubah => 'Elemen Data yang Diubah';
+  @override
+  String get pilihDataDiubah => 'Pilih data yang diubah';
+  @override
+  String get tambahDataLain => 'Tambah data lain';
+  @override
+  String get pilihElemenData => 'Pilih Elemen Data';
+  @override
+  String get pilihMinimalSatuBiodata =>
+      'Pilih data biodata yang ingin diubah...';
+  @override
+  String get nilaiLamaLabel => 'Nilai lama (sesuai KK saat ini)';
+  @override
+  String get nilaiBaruLabel => 'Nilai baru (yang diinginkan)';
+  @override
+  String get permohonanTerkirim => 'Permohonan Terkirim';
+  @override
+  String suksesPermohonanSub(String layanan) =>
+      '$layanan Anda telah diterima dan akan diverifikasi oleh petugas Disdukcapil.';
+  @override
+  String get nomorPermohonan => 'Nomor Permohonan';
+  @override
+  String get ketukSalinBukti =>
+      'Ketuk untuk menyalin · simpan sebagai bukti pengajuan';
+  @override
+  String get nomorDisalin => 'Nomor permohonan disalin.';
+  @override
+  String get lihatRiwayatPermohonan => 'Lihat Riwayat Permohonan';
+  @override
+  String get kembaliKeBeranda => 'Kembali ke Beranda';
+  @override
+  String get memuatDetail => 'Memuat detail permohonan…';
+  @override
+  String get gagalMuatDetail => 'Tidak dapat memuat detail.';
+  @override
+  String get mengunduhDokumen => 'Mengunduh Dokumen';
+  @override
+  String get batalkanPermohonanJudul => 'Batalkan Permohonan?';
+  @override
+  String get batalkanPermohonanPesan =>
+      'Permohonan yang dibatalkan tidak dapat diaktifkan kembali. Anda perlu mengajukan ulang dari awal.';
+  @override
+  String get yaBatalkan => 'Ya, batalkan';
+  @override
+  String get permohonanDibatalkan => 'Permohonan berhasil dibatalkan.';
+  @override
+  String get gagalBatalkan => 'Gagal membatalkan permohonan.';
+  @override
+  String get unduhTandaTerima => 'Unduh Tanda Terima (PDF)';
+  @override
+  String get unduhDokumenFinal => 'Unduh Dokumen Final';
+  @override
+  String get batalkanPermohonanAksi => 'Batalkan Permohonan';
+  @override
+  String get pembaruanTerakhir => 'Pembaruan Terakhir';
+  @override
+  String get pemohon => 'Pemohon';
+  @override
+  String get catatanPetugas => 'Catatan Petugas';
+  @override
+  String get dataPermohonan => 'Data Permohonan';
+  @override
+  String get memuatNotifikasi => 'Memuat notifikasi…';
+  @override
+  String get gagalMuatNotifikasi => 'Tidak dapat memuat notifikasi.';
+  @override
+  String get notifKosongJudul => 'Belum Ada Notifikasi';
+  @override
+  String get notifKosongPesan =>
+      'Pembaruan status permohonan Anda akan muncul di sini.';
+  @override
+  String get filterSemua => 'Semua';
+  @override
+  String get filterBelumDibaca => 'Belum dibaca';
+  @override
+  String get kategoriStatus => 'Status';
+  @override
+  String get kategoriTindakan => 'Tindakan';
+  @override
+  String get kategoriInfo => 'Info';
+  @override
+  String get kategoriSistem => 'Sistem';
+  @override
+  String get pengaturanSub => 'Keamanan, notifikasi, bahasa';
+  @override
+  String get panduanLayananSub => 'Cara mengajukan permohonan';
+  @override
+  String get pusatBantuanSub => 'FAQ dan kontak Disdukcapil';
+  @override
+  String get seksiAkun => 'Akun';
+  @override
+  String get seksiKeamanan => 'Keamanan';
+  @override
+  String get seksiPreferensi => 'Preferensi';
+  @override
+  String get seksiTentang => 'Tentang Aplikasi';
+  @override
+  String get gantiKataSandiJudul => 'Ganti Kata Sandi';
+  @override
+  String get gantiKataSandiSub => 'Perbarui kata sandi akun Anda';
+  @override
+  String get keluarAkun => 'Keluar dari Akun';
+  @override
+  String get keluarAkunJudul => 'Keluar dari Akun?';
+  @override
+  String get keluarAkunPesan =>
+      'Anda perlu masuk kembali untuk mengakses layanan.';
+  @override
+  String get nikTidakDapatDiubah => 'NIK tidak dapat diubah.';
+  @override
+  String get alamatDomisili => 'Alamat Domisili';
+  @override
+  String get simpanPerubahan => 'Simpan Perubahan';
+  @override
+  String get menyimpanProfil => 'Menyimpan Profil';
+  @override
+  String get profilDiperbarui => 'Profil berhasil diperbarui.';
+  @override
+  String get gagalSimpanProfil => 'Gagal menyimpan profil.';
+  @override
+  String get infoUbahIdentitas =>
+      'Perubahan data identitas resmi (NIK, tanggal lahir) hanya dapat dilakukan melalui layanan KK Perubahan Biodata.';
+  @override
+  String get gantiSandiInfo =>
+      'Gunakan kata sandi yang kuat: minimal 8 karakter dengan kombinasi huruf besar dan angka.';
+  @override
+  String get kataSandiSaatIni => 'Kata Sandi Saat Ini';
+  @override
+  String get menyimpanKataSandi => 'Menyimpan Kata Sandi';
+  @override
+  String get gagalUbahSandi => 'Gagal memperbarui kata sandi.';
+  @override
+  String get permintaanDiproses => 'Permintaan sedang diproses.';
+  @override
+  String get baruSaja => 'Baru saja';
+  @override
+  String menitLalu(int n) => '$n menit lalu';
+  @override
+  String jamLalu(int n) => '$n jam lalu';
+  @override
+  String hariLalu(int n) => '$n hari lalu';
+  @override
+  String get perangkatAktif => 'Perangkat Aktif';
+  @override
+  String get kelolaPerangkat => 'Kelola Perangkat';
+  @override
+  String get logoutPerangkat => 'Logout Perangkat';
+  @override
+  String get batasPerangkatJudul => 'Batas Perangkat Tercapai';
+  @override
+  String get batasPerangkatPesan =>
+      'Akun sudah digunakan pada 2 perangkat aktif. Keluarkan salah satu perangkat untuk melanjutkan.';
+  @override
+  String get perangkatIni => 'Perangkat ini';
+  @override
+  String get perangkatTidakDikenal => 'Perangkat tidak dikenal';
+  @override
+  String get terakhirAktif => 'Terakhir aktif';
+  @override
+  String get logoutPerangkatKonfirmasiJudul => 'Logout Perangkat?';
+  @override
+  String get logoutPerangkatKonfirmasiPesan =>
+      'Perangkat ini akan dikeluarkan dari akun Anda.';
+  @override
+  String get lanjutKeBeranda => 'Lanjut ke Beranda';
+  @override
+  String get perangkatBerhasilDilogout => 'Perangkat berhasil dikeluarkan.';
+  @override
+  String get gagalLogoutPerangkat => 'Gagal mengeluarkan perangkat. Coba lagi.';
+  @override
+  String get memuatPerangkat => 'Memuat perangkat';
+  @override
+  String get tidakAdaPerangkatLain => 'Tidak ada perangkat lain';
+  @override
+  String get tidakAdaPerangkatLainPesan =>
+      'Hanya perangkat ini yang aktif pada akun Anda.';
+  @override
+  String get tabPerangkatAktif => 'Aktif';
+  @override
+  String get tabRiwayatPerangkat => 'Riwayat';
+  @override
+  String get riwayatPerangkat => 'Riwayat Perangkat';
+  @override
+  String get riwayatPerangkatKosong => 'Belum ada riwayat perangkat.';
+  @override
+  String get statusPerangkatAktif => 'Aktif';
+  @override
+  String get statusPerangkatDicabut => 'Dicabut';
+  @override
+  String get statusPerangkatKedaluwarsa => 'Kedaluwarsa';
+  @override
+  String get masukPada => 'Masuk';
+  @override
+  String get keluarkanPerangkatJudul => 'Keluarkan Perangkat';
+  @override
+  String get keluarkanPerangkatPesan =>
+      'Akun sudah mencapai batas perangkat. Pilih satu perangkat untuk dikeluarkan agar Anda dapat masuk.';
+  @override
+  String get keluarkanDanMasuk => 'Keluarkan & Masuk';
+  @override
+  String get pilihPerangkatDahulu => 'Pilih perangkat terlebih dahulu.';
+  @override
+  String get kataSandiSalah => 'Kata sandi salah.';
+  @override
+  String get perangkatTidakValidRefresh =>
+      'Perangkat yang dipilih tidak valid. Daftar diperbarui.';
+  @override
+  String get perangkatSudahKeluarPilihUlang =>
+      'Perangkat sudah keluar. Silakan pilih ulang.';
+  @override
+  String get kabupatenKota => 'Kabupaten/Kota';
+  @override
+  String get kecamatan => 'Kecamatan';
+  @override
+  String get desaKelurahan => 'Desa/Kelurahan';
+  @override
+  String get pilihKabupaten => 'Pilih Kabupaten/Kota';
+  @override
+  String get pilihKecamatan => 'Pilih Kecamatan';
+  @override
+  String get pilihDesa => 'Pilih Desa/Kelurahan';
+  @override
+  String get pilihKabupatenDahulu => 'Pilih kabupaten/kota terlebih dahulu';
+  @override
+  String get pilihKecamatanDahulu => 'Pilih kecamatan terlebih dahulu';
+  @override
+  String get cariWilayah => 'Cari wilayah';
+  @override
+  String get gagalMuatWilayah => 'Gagal memuat data wilayah.';
+  @override
+  String get wilayahWajib => 'Lengkapi kabupaten, kecamatan, dan desa.';
+  @override
+  String get pilihDomisili => 'Pilih kabupaten, kecamatan, desa';
+  @override
+  String get infoKataSandiSementara =>
+      'Setelah disetujui operator, kata sandi sementara dikirim ke email Anda. Masuk dengan NIK/email/no. HP dan kata sandi tersebut, lalu buat username & kata sandi sendiri.';
+  @override
+  String get lupaPesanNetral =>
+      'Jika terdaftar, tautan reset dikirim ke email Anda.';
+  @override
+  String get resetTokenKedaluwarsa =>
+      'Tautan reset tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.';
+  @override
+  String get mintaTautanBaru => 'Minta Tautan Baru';
 }
