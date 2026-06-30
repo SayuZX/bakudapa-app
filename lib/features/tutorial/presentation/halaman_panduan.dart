@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 
+import '../../../core/errors/kesalahan.dart';
 import '../../../core/extensions/konteks.dart';
 import '../../../core/localization/teks.dart';
 import '../../../core/theme/dimensi.dart';
 import '../../../core/theme/warna.dart';
 import '../../../shared/models/jenis_layanan.dart';
-import '../../services/domain/definisi_formulir.dart';
+import '../../../shared/widgets/kondisi_galat.dart';
+import '../../../shared/widgets/kondisi_kosong.dart';
+import '../../services/providers/penyedia_layanan.dart';
 
 class HalamanPanduan extends ConsumerWidget {
   const HalamanPanduan({super.key});
@@ -28,8 +31,8 @@ class HalamanPanduan extends ConsumerWidget {
               Tab(text: t.tabLayanan),
               Tab(text: t.tabKeamanan),
             ],
-            indicatorColor: Warna.merahUtama,
-            labelColor: Warna.merahUtama,
+            indicatorColor: Warna.primer,
+            labelColor: Warna.primer,
             unselectedLabelColor: Warna.teksKedua,
             indicatorSize: TabBarIndicatorSize.label,
             dividerColor: Warna.garis,
@@ -97,80 +100,134 @@ class _TabMemulai extends StatelessWidget {
   }
 }
 
-class _TabLayanan extends StatelessWidget {
+class _TabLayanan extends ConsumerWidget {
   const _TabLayanan();
 
   @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(Jarak.layarH, Jarak.md, Jarak.layarH, Jarak.xxl),
-      itemCount: JenisLayanan.values.length,
-      separatorBuilder: (_, _) => const SizedBox(height: Jarak.md),
-      itemBuilder: (_, i) {
-        final j = JenisLayanan.values[i];
-        final f = KatalogFormulir.untuk(j);
-        return ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: Jarak.md),
-          childrenPadding: const EdgeInsets.fromLTRB(Jarak.md, 0, Jarak.md, Jarak.md),
-          collapsedShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Sudut.md),
-            side: const BorderSide(color: Warna.garis),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Sudut.md),
-            side: const BorderSide(color: Warna.garis),
-          ),
-          leading: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: Warna.netral100,
-              borderRadius: BorderRadius.circular(Sudut.sm),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(teksProvider);
+    final daftar = ref.watch(penyediaDaftarLayanan(const FilterDaftarLayanan()));
+    return daftar.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => KondisiGalat(
+        pesan: pesanRamah(e, fallback: t.terjadiKesalahan, teks: t),
+        saatCobaLagi: () => ref.invalidate(
+          penyediaDaftarLayanan(const FilterDaftarLayanan()),
+        ),
+      ),
+      data: (layanan) {
+        if (layanan.isEmpty) {
+          return KondisiKosong(judul: t.tidakAdaLayanan);
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(Jarak.layarH, Jarak.md, Jarak.layarH, Jarak.xxl),
+          itemCount: layanan.length,
+          separatorBuilder: (_, _) => const SizedBox(height: Jarak.md),
+          itemBuilder: (_, i) => _KartuLayananPanduan(layanan: layanan[i]),
+        );
+      },
+    );
+  }
+}
+
+class _KartuLayananPanduan extends ConsumerWidget {
+  const _KartuLayananPanduan({required this.layanan});
+
+  final RingkasanLayanan layanan;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(teksProvider);
+    return ExpansionTile(
+      tilePadding: const EdgeInsets.symmetric(horizontal: Jarak.md),
+      childrenPadding: const EdgeInsets.fromLTRB(Jarak.md, 0, Jarak.md, Jarak.md),
+      collapsedShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Sudut.md),
+        side: const BorderSide(color: Warna.garis),
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Sudut.md),
+        side: const BorderSide(color: Warna.garis),
+      ),
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: Warna.netral100,
+          borderRadius: BorderRadius.circular(Sudut.sm),
+        ),
+        child: Icon(layanan.ikon, size: 20),
+      ),
+      title: Text(t.katalog(layanan.nama), style: context.teks.titleSmall),
+      subtitle: Text(
+        t.katalog(layanan.deskripsiTampil),
+        style: context.teks.bodySmall?.copyWith(color: Warna.teksKedua),
+      ),
+      children: [_RincianLayananPanduan(kode: layanan.kode)],
+    );
+  }
+}
+
+class _RincianLayananPanduan extends ConsumerWidget {
+  const _RincianLayananPanduan({required this.kode});
+
+  final String kode;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(teksProvider);
+    final detail = ref.watch(penyediaDetailLayanan(kode));
+    return detail.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: Jarak.md),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          pesanRamah(e, fallback: t.terjadiKesalahan, teks: t),
+          style: context.teks.bodySmall?.copyWith(color: Warna.bahaya),
+        ),
+      ),
+      data: (layanan) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (k, syarat) in t.daftarKatalog(layanan.persyaratanTeks).indexed) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: Warna.primerLembut,
+                    borderRadius: BorderRadius.circular(Sudut.pil),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${k + 1}',
+                    style: context.teks.labelSmall?.copyWith(
+                      color: Warna.primer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: Jarak.sm),
+                Expanded(
+                  child: Text(syarat, style: context.teks.bodyMedium),
+                ),
+              ],
             ),
-            child: Icon(j.ikon, size: 20),
-          ),
-          title: Text(j.nama, style: context.teks.titleSmall),
-          subtitle: Text(
-            j.deskripsi,
-            style: context.teks.bodySmall?.copyWith(color: Warna.teksKedua),
-          ),
-          children: [
-            for (var k = 0; k < f.langkahPanduan.length; k++) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: Warna.merahLembut,
-                      borderRadius: BorderRadius.circular(Sudut.pil),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '${k + 1}',
-                      style: context.teks.labelSmall?.copyWith(
-                        color: Warna.merahUtama,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: Jarak.sm),
-                  Expanded(
-                    child: Text(f.langkahPanduan[k], style: context.teks.bodyMedium),
-                  ),
-                ],
-              ),
-              const SizedBox(height: Jarak.sm),
-            ],
-            const SizedBox(height: 4),
-            Consumer(builder: (context, ref, _) {
-              final t = ref.watch(teksProvider);
-              return Text(t.dokumenDisiapkan,
-                  style: context.teks.titleSmall?.copyWith(color: Warna.teksKedua));
-            }),
             const SizedBox(height: Jarak.sm),
-            for (final b in f.berkas)
+          ],
+          if (layanan.slotDokumen.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              t.dokumenDisiapkan,
+              style: context.teks.titleSmall?.copyWith(color: Warna.teksKedua),
+            ),
+            const SizedBox(height: Jarak.sm),
+            for (final b in layanan.slotDokumen)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
@@ -179,20 +236,17 @@ class _TabLayanan extends StatelessWidget {
                         color: Warna.sukses, size: 16),
                     const SizedBox(width: Jarak.sm),
                     Expanded(
-                      child: Consumer(builder: (context, ref, _) {
-                        final t = ref.watch(teksProvider);
-                        return Text(
-                          '${b.label}${b.wajib ? '' : ' (${t.opsional})'}',
-                          style: context.teks.bodyMedium,
-                        );
-                      }),
+                      child: Text(
+                        '${t.katalog(b.label)}${b.wajib ? '' : ' (${t.opsional})'}',
+                        style: context.teks.bodyMedium,
+                      ),
                     ),
                   ],
                 ),
               ),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
 }
@@ -266,10 +320,10 @@ class _KartuLangkah extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Warna.merahLembut,
+              color: Warna.primerLembut,
               borderRadius: BorderRadius.circular(Sudut.md),
             ),
-            child: Icon(langkah.ikon, color: Warna.merahUtama, size: 22),
+            child: Icon(langkah.ikon, color: Warna.primer, size: 22),
           ),
           const SizedBox(width: Jarak.md),
           Expanded(
