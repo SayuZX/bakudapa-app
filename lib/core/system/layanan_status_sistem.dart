@@ -49,11 +49,13 @@ class LayananStatusSistem {
   void tandaiAktifDariResponseGalat({
     String? judul,
     String? pesan,
+    DateTime? estimasiSelesai,
   }) {
     final hasil = StatusMaintenance(
       aktif: true,
       judul: judul,
       pesan: pesan,
+      estimasiSelesai: estimasiSelesai ?? _terakhir.estimasiSelesai,
       diperiksaPada: DateTime.now(),
     );
     _publis(hasil);
