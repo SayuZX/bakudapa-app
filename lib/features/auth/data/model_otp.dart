@@ -42,12 +42,14 @@ class HasilVerifikasiOtpLogin extends HasilVerifikasiOtp {
     required this.tokenSegar,
     required this.kedaluwarsaPada,
     required this.pengguna,
+    this.wajibGantiKataSandi = false,
   });
 
   final String tokenAkses;
   final String tokenSegar;
   final DateTime kedaluwarsaPada;
   final Pengguna pengguna;
+  final bool wajibGantiKataSandi;
 
   factory HasilVerifikasiOtpLogin.dariJson(Map<String, dynamic> json) {
     return HasilVerifikasiOtpLogin(
@@ -60,6 +62,7 @@ class HasilVerifikasiOtpLogin extends HasilVerifikasiOtp {
               DateTime.now().add(const Duration(hours: 1)),
       pengguna: Pengguna.dariJson(
           json['pengguna'] as Map<String, dynamic>? ?? const {}),
+      wajibGantiKataSandi: json['wajib_ganti_kata_sandi'] == true,
     );
   }
 }
@@ -70,7 +73,9 @@ class HasilVerifikasiOtpReset extends HasilVerifikasiOtp {
 
   factory HasilVerifikasiOtpReset.dariJson(Map<String, dynamic> json) {
     return HasilVerifikasiOtpReset(
-      tokenReset: json['token_reset']?.toString() ?? '',
+      tokenReset: json['token_reset']?.toString() ??
+          json['reset_token']?.toString() ??
+          '',
     );
   }
 }
