@@ -18,6 +18,9 @@ if (keystorePropertiesFile.exists()) {
 val stempelBuild: String =
     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(Date())
 
+val stempelVersi: String =
+    SimpleDateFormat("yyyyMMddHHmm").format(Date())
+
 android {
     namespace = "org.gatechstudio.malutprovkab"
     compileSdk = 36
@@ -36,8 +39,8 @@ android {
         applicationId = "org.gatechstudio.malutprovkab"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        versionCode = (System.currentTimeMillis() / 60000L).toInt()
+        versionName = "${flutter.versionName}.$stempelVersi"
 
         buildConfigField("String", "PEMEGANG_HAKI", "\"GATECH\"")
         buildConfigField("String", "TAHUN_CIPTA", "\"2024\"")
