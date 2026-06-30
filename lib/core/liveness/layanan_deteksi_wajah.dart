@@ -57,11 +57,11 @@ class LayananDeteksiWajah {
 
   bool _sedangProses = false;
 
-  Future<HasilDeteksiWajah> prosesFrame(
+  Future<HasilDeteksiWajah?> prosesFrame(
     CameraImage gambar,
     CameraDescription kamera,
   ) async {
-    if (_sedangProses) return HasilDeteksiWajah.tidakAda;
+    if (_sedangProses) return null;
     _sedangProses = true;
     try {
       final lum = _luminansiRata(gambar);
