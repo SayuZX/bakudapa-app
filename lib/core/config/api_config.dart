@@ -1,12 +1,9 @@
+import 'lingkungan.dart';
+
 class ApiConfig {
   ApiConfig._();
 
-  static const String baseUrlProd = 'https://bakudapa.malutprov.go.id/api';
-
-  static const String baseUrl = String.fromEnvironment(
-    'BAKUDAPA_BASE_URL',
-    defaultValue: baseUrlProd,
-  );
+  static const String baseUrl = KonfigurasiLingkungan.baseUrl;
 
   static const String apiVersion = '1';
   static const String defaultLocale = 'id';
@@ -17,7 +14,6 @@ class ApiConfig {
   static const Duration uploadTimeout = Duration(seconds: 120);
 
   static const Duration tokenAksesTtl = Duration(hours: 1);
-  static const Duration tokenRefreshTtl = Duration(days: 30);
 
   static Map<String, String> get defaultHeaders => {
         'Accept': 'application/json',
