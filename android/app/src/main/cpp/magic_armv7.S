@@ -1,6 +1,3 @@
-// Lapisan kepemilikan — assembly AArch32 (armeabi-v7a), Thumb-2.
-// Fragmen seed identitas (SHA-256 string kepemilikan ter-obfuscate) di immediate movw/movt.
-// Return 64-bit di r0(low):r1(high).
     .syntax unified
     .thumb
     .text
