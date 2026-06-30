@@ -91,7 +91,7 @@ class _IsianGarisBawahState extends State<IsianGarisBawah> {
           borderSide: BorderSide(color: Warna.garis, width: 1.2),
         ),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Warna.merahUtama, width: 1.6),
+          borderSide: BorderSide(color: Warna.primer, width: 1.6),
         ),
         errorBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: Warna.bahaya, width: 1.2),
