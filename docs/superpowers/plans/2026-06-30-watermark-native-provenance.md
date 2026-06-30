@@ -11,8 +11,8 @@
 ## Global Constraints
 
 - Package id: `org.gatechstudio.malutprovkab`.
-- Identitas HAKI verbatim: `PEMEGANG_HAKI="RAIHAN NUGROHO"`, `TAHUN_CIPTA="2024"` (dari `android/app/build.gradle.kts:42-43`).
-- Seed identitas: `seed = SHA256("RAIHAN NUGROHO" + "|" + "2024" + "|" + "org.gatechstudio.malutprovkab")`.
+- Decoy publik: `PEMEGANG_HAKI="GATECH"` di BuildConfig + manifest meta-data (bukan sumber seed).
+- Seed identitas: `seed = SHA256(bukaSandi())` di mana `bukaSandi()` mendeobfuscate string kepemilikan (`SANDI ⊕ KUNCI`) di dalam `.so`; nama asli TIDAK pernah plaintext. Hasil = `SIDIK_KEPEMILIKAN` (`dfac89fc…381f1`).
 - Tidak ada komentar pada kode (preferensi user: self-documenting, zero comments) — KECUALI file `.S` yang sudah berkomentar mengikuti pola existing; ikuti gaya file yang disentuh.
 - ABI didukung: `armeabi-v7a`, `arm64-v8a`, `x86_64` (dari `android/app/build.gradle.kts:64`).
 - Native channel: `bakudapa/keamanan` (existing, `MainActivity.kt:10`).
@@ -712,40 +712,11 @@ git commit -m "feat(native): seed_inti.h core reassembly+keystream+blobKey, host
   - arm64/armv7/x86_64 masing-masing meng-export: `kepem_frag_u0..u3` (salinan utama) dan `kepem_frag_c0..c3` (salinan cadangan), tiap fungsi balikan `uint64_t` fragmen.
   - Pertahankan `kepemilikan_magic()` (kompat) = `kepem_frag_u0()`.
 - `kepemilikan.cpp` produces JNI:
-  - `Java_org_gatechstudio_malutprovkab_Kepemilikan_kunciBlobNative(JNIEnv*, jobject, jstring identitas)` → `jstring` 64 hex. Hitung `seedAsm` dari fragmen; hitung `seedId = sidikBita(identitas)`. Bila `utama==cadangan` DAN `setara(seedAsm, seedId)` → `blobKeyHeks(seedAsm)`. Bila salah satu gagal → korup `seedAsm[0] ^= 0xFF` lalu `blobKeyHeks` (key "salah" → dekrip token gagal → app paksa re-login). Ini yang membuat ubah identitas TANPA regen `.S` (atau sebaliknya) memecahkan app.
+  - `Java_org_gatechstudio_malutprovkab_Kepemilikan_kunciBlobNative(JNIEnv*, jobject)` → `jstring` 64 hex. TANPA arg identitas dari Kotlin. Internal: `seedAsm` dari fragmen; `seedId = sidikBita(bukaSandi())` (deobfuscate string kepemilikan di `.so`). Bila `utama==cadangan` DAN `setara(seedAsm, seedId)` → `blobKeyHeks(seedAsm)`. Bila salah satu gagal → korup `seedAsm[0] ^= 0xFF` lalu `blobKeyHeks` (key "salah" → dekrip token gagal → app paksa re-login). Ubah `SANDI`/identitas TANPA regen `.S` (atau sebaliknya) → mismatch → app pecah.
 
 - [ ] **Step 1: Tulis generator seed**
 
-`tools/gen_seed/gen_seed.dart` — hitung `seed = SHA256("RAIHAN NUGROHO|2024|org.gatechstudio.malutprovkab")`, pecah 4×u64 big-endian, cetak immediate untuk tiap ABI.
-
-```dart
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
-
-void main() {
-  const id = 'RAIHAN NUGROHO|2024|org.gatechstudio.malutprovkab';
-  final seed = sha256.convert(utf8.encode(id)).bytes;
-  final frags = <int>[];
-  for (var i = 0; i < 4; i++) {
-    var v = 0;
-    for (var j = 0; j < 8; j++) {
-      v = (v << 8) | seed[i * 8 + j];
-    }
-    frags.add(v);
-  }
-  print('seed=${seed.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}');
-  for (var i = 0; i < 4; i++) {
-    final h = frags[i].toUnsigned(64).toRadixString(16).padLeft(16, '0');
-    print('F$i=0x$h');
-    final w = [
-      h.substring(12, 16), h.substring(8, 12), h.substring(4, 8), h.substring(0, 4),
-    ];
-    print('  arm64 movz x0,#0x${w[0]} / movk lsl16 #0x${w[1]} / lsl32 #0x${w[2]} / lsl48 #0x${w[3]}');
-    print('  x86_64 movabs \$0x$h,%rax');
-    print('  armv7 lo=0x${h.substring(8)} hi=0x${h.substring(0, 8)}');
-  }
-}
-```
+`tools/gen_seed/gen_seed.dart` — deobfuscate `SANDI ⊕ KUNCI` (sama seperti `bukaSandi()` di cpp), `SHA256` hasilnya, pecah 4×u64 big-endian, cetak `seed` + immediate per ABI. Nama pemegang TIDAK pernah dicetak/disimpan plaintext — hanya bentuk ter-obfuscate `SANDI` (sudah ada di repo). `seed` yang dihasilkan = `SIDIK_KEPEMILIKAN` (`dfac89fc…381f1`). Format hex per-fragmen WAJIB dari byte (bukan `int.toRadixString`, yang membalik tanda untuk fragmen ber-bit63).
 
 - [ ] **Step 2: Jalankan generator, catat output**
 
