@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 
+import '../config/endpoints.dart';
 import '../config/session_config.dart';
 import '../config/storage_keys.dart';
+import '../services/layanan_sidik_perangkat.dart';
 import '../services/penyimpanan_aman.dart';
+import '../utils/token_jwt.dart';
 
 class PencegatOtentikasi extends Interceptor {
   PencegatOtentikasi({
@@ -46,7 +49,8 @@ class PencegatOtentikasi extends Interceptor {
   ) async {
     final kode = err.response?.statusCode;
     final sudahDitukar = err.requestOptions.extra[_kunciDitukar] == true;
-    if (kode != 401 || sudahDitukar) {
+    final anonim = err.requestOptions.extra['anonim'] == true;
+    if (kode != 401 || sudahDitukar || anonim) {
       handler.next(err);
       return;
     }
@@ -67,6 +71,11 @@ class PencegatOtentikasi extends Interceptor {
         permintaanUlang.data = data.clone();
       }
       final tanggapan = await dioPenyegar.fetch(permintaanUlang);
+      final body = tanggapan.data;
+      if (body is Map && body['success'] == true && body.containsKey('data')) {
+        tanggapan.data = body['data'];
+        if (body['meta'] != null) tanggapan.extra['meta'] = body['meta'];
+      }
       handler.resolve(tanggapan);
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -94,27 +103,37 @@ class PencegatOtentikasi extends Interceptor {
     final penyelesai = Completer<bool>();
     _penyegarBerjalan = penyelesai;
     try {
-      final refresh = await penyimpanan.baca(StorageKeys.refreshToken);
-      if (refresh == null || refresh.isEmpty) {
+      final tokenRefresh = await penyimpanan.baca(StorageKeys.refreshToken);
+      if (tokenRefresh == null || tokenRefresh.isEmpty) {
         penyelesai.complete(false);
         return false;
       }
+      final sidik = await LayananSidikPerangkat.instance.sidikJari();
       final hasil = await dioPenyegar.post(
-        '/auth/segarkan-token',
-        data: {'token_refresh': refresh},
+        Endpoints.authSegarkanToken,
+        data: {
+          'token_refresh': tokenRefresh,
+          'device_fingerprint': sidik,
+        },
         options: Options(extra: const {'anonim': true}),
       );
       final isi = _baca(hasil.data);
-      final akses = isi?['token_akses'];
-      final segar = isi?['token_refresh'];
-      final kedaluwarsa = isi?['kedaluwarsa_pada'];
-      if (akses is String && akses.isNotEmpty) {
-        await penyimpanan.tulis(StorageKeys.accessToken, akses);
-        if (segar is String && segar.isNotEmpty) {
-          await penyimpanan.tulis(StorageKeys.refreshToken, segar);
+      final tokenAkses = isi?['token_akses'];
+      if (tokenAkses is String && tokenAkses.isNotEmpty) {
+        await penyimpanan.tulis(StorageKeys.accessToken, tokenAkses);
+        final refreshBaru = isi?['token_refresh'];
+        if (refreshBaru is String && refreshBaru.isNotEmpty) {
+          await penyimpanan.tulis(StorageKeys.refreshToken, refreshBaru);
         }
-        if (kedaluwarsa is String && kedaluwarsa.isNotEmpty) {
-          await penyimpanan.tulis(StorageKeys.kedaluwarsa, kedaluwarsa);
+        final kedaluwarsaRaw = isi?['kedaluwarsa_pada'];
+        final kedaluwarsa = kedaluwarsaRaw is String
+            ? DateTime.tryParse(kedaluwarsaRaw)
+            : TokenJwt.bacaKedaluwarsa(tokenAkses);
+        if (kedaluwarsa != null) {
+          await penyimpanan.tulis(
+            StorageKeys.kedaluwarsa,
+            kedaluwarsa.toIso8601String(),
+          );
         }
         penyelesai.complete(true);
         return true;
