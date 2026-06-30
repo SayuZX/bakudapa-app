@@ -1,140 +1,223 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
+import '../../../core/errors/kesalahan.dart';
 import '../../../core/extensions/konteks.dart';
 import '../../../core/localization/teks.dart';
 import '../../../core/router/nama_rute.dart';
+import '../../../core/router/navigasi_aman.dart';
 import '../../../core/theme/dimensi.dart';
 import '../../../core/theme/warna.dart';
 import '../../../shared/models/jenis_layanan.dart';
-import '../../../shared/widgets/kartu.dart';
+import '../../../shared/widgets/kondisi_galat.dart';
+import '../../../shared/widgets/kondisi_kosong.dart';
+import '../../../shared/widgets/pemuat_lingkar.dart';
+import '../providers/penyedia_layanan.dart';
 
-class HalamanLayanan extends ConsumerStatefulWidget {
+class HalamanLayanan extends ConsumerWidget {
   const HalamanLayanan({super.key});
 
   @override
-  ConsumerState<HalamanLayanan> createState() => _HalamanLayananState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(teksProvider);
+    final daftar = ref.watch(
+      penyediaDaftarLayanan(const FilterDaftarLayanan()),
+    );
+    return Scaffold(
+      backgroundColor: Warna.latar,
+      appBar: AppBar(title: Text(t.layananPermohonan)),
+      body: daftar.when(
+        loading: () => PemuatLingkar(pesan: t.mohonTungguSebentar),
+        error: (e, _) => KondisiGalat(
+          pesan: pesanRamah(e, fallback: t.terjadiKesalahan, teks: t),
+          saatCobaLagi: () => ref.invalidate(
+            penyediaDaftarLayanan(const FilterDaftarLayanan()),
+          ),
+        ),
+        data: (layanan) {
+          if (layanan.isEmpty) {
+            return KondisiKosong(
+              judul: t.tidakAdaLayanan,
+              labelAksi: t.cobaLagi,
+              saatAksi: () => ref.invalidate(
+                penyediaDaftarLayanan(const FilterDaftarLayanan()),
+              ),
+            );
+          }
+          return _DaftarServer(teks: t, layanan: layanan);
+        },
+      ),
+    );
+  }
 }
 
-class _HalamanLayananState extends ConsumerState<HalamanLayanan> {
-  String _kueri = '';
+class _DaftarServer extends StatelessWidget {
+  const _DaftarServer({required this.teks, required this.layanan});
+
+  final Teks teks;
+  final List<RingkasanLayanan> layanan;
 
   @override
   Widget build(BuildContext context) {
-    final t = ref.watch(teksProvider);
-    final daftar = JenisLayanan.values.where((j) {
-      if (_kueri.isEmpty) return true;
-      final k = _kueri.toLowerCase();
-      return j.nama.toLowerCase().contains(k) || j.deskripsi.toLowerCase().contains(k);
-    }).toList();
-
-    return Scaffold(
-      backgroundColor: Warna.latar,
-      appBar: AppBar(
-        title: Text(t.layanan),
-        elevation: 0,
+    final kelompok = <String, List<RingkasanLayanan>>{};
+    for (final item in layanan) {
+      final kunci = (item.kategori ?? '').trim();
+      kelompok.putIfAbsent(kunci.isEmpty ? '_' : kunci, () => []).add(item);
+    }
+    final kategori = kelompok.keys.toList();
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        Jarak.layarH,
+        Jarak.sm,
+        Jarak.layarH,
+        Jarak.xxxl,
       ),
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(Jarak.layarH, 0, Jarak.layarH, Jarak.md),
-              child: TextField(
-                onChanged: (v) => setState(() => _kueri = v),
-                decoration: InputDecoration(
-                  hintText: t.cariLayanan,
-                  prefixIcon: const Icon(HugeIcons.strokeRoundedSearch01, size: 20),
-                ),
+      children: [
+        for (var i = 0; i < kategori.length; i++) ...[
+          if (i > 0) const SizedBox(height: Jarak.xxl),
+          if (kategori[i] != '_') ...[
+            Text(
+              teks.katalog(kategori[i]),
+              style: context.teks.labelLarge?.copyWith(
+                color: Warna.teksKetiga,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
               ),
             ),
-            if (daftar.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(Jarak.xxl),
-                child: Center(
-                  child: Text(
-                    t.tidakAdaLayanan,
-                    style: context.teks.bodyMedium?.copyWith(color: Warna.teksKedua),
-                  ),
-                ),
-              )
-            else
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(Jarak.layarH, 0, Jarak.layarH, Jarak.xxl),
-                  itemCount: daftar.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: Jarak.md),
-                  itemBuilder: (_, i) {
-                    final j = daftar[i];
-                    return Kartu(
-                      saatKetuk: () => context.push('${NamaRute.detailLayanan}/${j.kode}'),
-                      anak: Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Warna.netral100,
-                              borderRadius: BorderRadius.circular(Sudut.md),
-                            ),
-                            child: Icon(j.ikon, color: Warna.teksUtama, size: 24),
-                          ),
-                          const SizedBox(width: Jarak.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        j.nama,
-                                        style: context.teks.titleSmall,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    if (!j.bisaOnline) ...[
-                                      const SizedBox(width: Jarak.sm),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: Warna.peringatanLembut,
-                                          borderRadius:
-                                              BorderRadius.circular(Sudut.pil),
-                                        ),
-                                        child: Text(
-                                          t.layananLoket,
-                                          style: context.teks.labelSmall?.copyWith(
-                                              color: Warna.peringatan,
-                                              fontWeight: FontWeight.w800),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  j.deskripsi,
-                                  style: context.teks.bodySmall?.copyWith(color: Warna.teksKedua),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: Jarak.sm),
-                          const Icon(HugeIcons.strokeRoundedArrowRight01,
-                              color: Warna.teksKetiga, size: 18),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+            const SizedBox(height: Jarak.md),
+          ],
+          _KartuKelompok(
+            anak: [
+              for (final item in kelompok[kategori[i]]!)
+                _BarisLayananServer(teks: teks, layanan: item),
+            ],
+          ),
+        ].animate(delay: (i * 70).ms).fadeIn(
+              duration: 300.ms,
+              curve: Curves.easeOutCubic,
+            ),
+      ],
+    );
+  }
+}
+
+class _KartuKelompok extends StatelessWidget {
+  const _KartuKelompok({required this.anak});
+
+  final List<Widget> anak;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Warna.permukaan,
+        borderRadius: BorderRadius.circular(Sudut.lg),
+        border: Border.all(color: Warna.garis),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var j = 0; j < anak.length; j++) ...[
+            if (j > 0) const Divider(indent: 76, color: Warna.pemisah),
+            anak[j],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BarisLayananServer extends StatelessWidget {
+  const _BarisLayananServer({required this.teks, required this.layanan});
+
+  final Teks teks;
+  final RingkasanLayanan layanan;
+
+  @override
+  Widget build(BuildContext context) {
+    return _BarisIsi(
+      teks: teks,
+      ikon: layanan.ikon,
+      nama: teks.katalog(layanan.nama),
+      deskripsi: teks.katalog(layanan.deskripsiTampil),
+      saatKetuk: () =>
+          context.pushAman(NamaRute.layananAwal, extra: layanan),
+    );
+  }
+}
+
+class _BarisIsi extends StatelessWidget {
+  const _BarisIsi({
+    required this.teks,
+    required this.ikon,
+    required this.nama,
+    required this.deskripsi,
+    required this.saatKetuk,
+  });
+
+  final Teks teks;
+  final IconData ikon;
+  final String nama;
+  final String deskripsi;
+  final VoidCallback saatKetuk;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: saatKetuk,
+      splashColor: Warna.primerLembut,
+      highlightColor: Warna.primerLembut,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Jarak.lg,
+          vertical: Jarak.lg,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Warna.primerLembut,
+                borderRadius: BorderRadius.circular(Sudut.md),
               ),
+              child: Icon(ikon, size: 22, color: Warna.primer),
+            ),
+            const SizedBox(width: Jarak.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nama,
+                    style: context.teks.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (deskripsi.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      deskripsi,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.teks.bodySmall?.copyWith(
+                        color: Warna.teksKedua,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: Jarak.sm),
+            const Icon(
+              HugeIcons.strokeRoundedArrowRight01,
+              size: 18,
+              color: Warna.teksKetiga,
+            ),
           ],
         ),
       ),
