@@ -1,11 +1,16 @@
+﻿import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/activity/jenis_aktivitas.dart';
+import '../../core/activity/layanan_pencatat_aktivitas.dart';
 import '../../core/config/storage_keys.dart';
 import '../../core/location/layanan_jejak_lokasi.dart';
 import '../../core/network/klien_jaringan.dart';
 import '../../core/security/penjaga_keamanan.dart';
 import '../../core/services/penyimpanan_aman.dart';
+import '../../features/auth/domain/repositori_otentikasi.dart';
 import '../models/pengguna.dart';
 import 'penyedia_repositori.dart';
 
@@ -13,7 +18,6 @@ enum StatusOtentikasi {
   memuat,
   masuk,
   belumMasuk,
-  vpnTerdeteksi,
   perangkatTidakAman,
   gagalCekKeamanan,
 }
@@ -25,6 +29,8 @@ class KondisiOtentikasi {
     this.pesan,
     this.laporanKeamanan,
     this.jejakLokasi,
+    this.wajibAturKredensial = false,
+    this.peringatanVpn = false,
   });
 
   final StatusOtentikasi status;
@@ -32,9 +38,10 @@ class KondisiOtentikasi {
   final String? pesan;
   final LaporanKeamanan? laporanKeamanan;
   final JejakLokasi? jejakLokasi;
+  final bool wajibAturKredensial;
+  final bool peringatanVpn;
 
   bool get terblokirOlehKeamanan =>
-      status == StatusOtentikasi.vpnTerdeteksi ||
       status == StatusOtentikasi.perangkatTidakAman ||
       status == StatusOtentikasi.gagalCekKeamanan;
 
@@ -44,6 +51,8 @@ class KondisiOtentikasi {
     String? pesan,
     LaporanKeamanan? laporanKeamanan,
     JejakLokasi? jejakLokasi,
+    bool? wajibAturKredensial,
+    bool? peringatanVpn,
     bool bersihkanPengguna = false,
     bool bersihkanPesan = false,
   }) {
@@ -53,14 +62,18 @@ class KondisiOtentikasi {
       pesan: bersihkanPesan ? null : (pesan ?? this.pesan),
       laporanKeamanan: laporanKeamanan ?? this.laporanKeamanan,
       jejakLokasi: jejakLokasi ?? this.jejakLokasi,
+      wajibAturKredensial: wajibAturKredensial ?? this.wajibAturKredensial,
+      peringatanVpn: peringatanVpn ?? this.peringatanVpn,
     );
   }
 }
 
 class PengaturOtentikasi extends StateNotifier<KondisiOtentikasi> {
-  PengaturOtentikasi(this._ref)
-      : super(const KondisiOtentikasi(status: StatusOtentikasi.memuat)) {
-    _mulai();
+  PengaturOtentikasi(this._ref, {bool mulaiOtomatis = true})
+    : super(const KondisiOtentikasi(status: StatusOtentikasi.memuat)) {
+    if (mulaiOtomatis) {
+      _mulai();
+    }
   }
 
   final Ref _ref;
@@ -118,13 +131,17 @@ class PengaturOtentikasi extends StateNotifier<KondisiOtentikasi> {
     state = hasilAuth.salin(
       laporanKeamanan: laporan,
       jejakLokasi: jejak,
+      peringatanVpn: laporan.vpnAktif,
     );
+  }
+
+  void tandaiPeringatanVpnDitampilkan() {
+    if (!state.peringatanVpn) return;
+    state = state.salin(peringatanVpn: false);
   }
 
   StatusOtentikasi _statusDariAlasan(AlasanBlokir a) {
     switch (a) {
-      case AlasanBlokir.vpn:
-        return StatusOtentikasi.vpnTerdeteksi;
       case AlasanBlokir.perangkatTidakAman:
         return StatusOtentikasi.perangkatTidakAman;
       case AlasanBlokir.gagalCek:
@@ -162,8 +179,14 @@ class PengaturOtentikasi extends StateNotifier<KondisiOtentikasi> {
       return const KondisiOtentikasi(status: StatusOtentikasi.belumMasuk);
     }
     try {
-      final pengguna = await _ref.read(penyediaRepositoriOtentikasi).mintaProfilSaya();
-      return KondisiOtentikasi(status: StatusOtentikasi.masuk, pengguna: pengguna);
+      final pengguna = await _ref
+          .read(penyediaRepositoriOtentikasi)
+          .mintaProfilSaya();
+      return KondisiOtentikasi(
+        status: StatusOtentikasi.masuk,
+        pengguna: pengguna,
+        wajibAturKredensial: pengguna.wajibGantiKataSandi,
+      );
     } catch (_) {
       await KlienJaringan.instance.bersihkanOtentikasi();
       return const KondisiOtentikasi(status: StatusOtentikasi.belumMasuk);
@@ -175,51 +198,108 @@ class PengaturOtentikasi extends StateNotifier<KondisiOtentikasi> {
     await _mulai();
   }
 
-  Future<bool> masuk({required String identitas, required String kataSandi}) async {
+  Future<HasilLogin> masuk({
+    required String identitas,
+    required String kataSandi,
+  }) async {
     final repo = _ref.read(penyediaRepositoriOtentikasi);
     final hasil = await repo.masuk(identitas: identitas, kataSandi: kataSandi);
-    if (hasil.perluOtp) {
-      return true;
-    }
-    state = state.salin(
-      status: StatusOtentikasi.masuk,
-      pengguna: hasil.pengguna,
-      bersihkanPesan: true,
-    );
-    return false;
+    return _finalkanLogin(hasil);
   }
 
-  void tandaiSudahMasukDariOtp(Pengguna pengguna) {
+  Future<HasilLogin> cabutDanMasuk({
+    required String identitas,
+    required String kataSandi,
+    required String idSesiDicabut,
+  }) async {
+    final repo = _ref.read(penyediaRepositoriOtentikasi);
+    final hasil = await repo.cabutDanMasuk(
+      identitas: identitas,
+      kataSandi: kataSandi,
+      idSesiDicabut: idSesiDicabut,
+    );
+    return _finalkanLogin(hasil);
+  }
+
+  Future<HasilLogin> _finalkanLogin(HasilLogin hasil) async {
+    if (hasil.perluOtp) {
+      return hasil;
+    }
+
+    if (hasil.perluKelolaPerangkat) {
+      state = state.salin(pengguna: hasil.pengguna, bersihkanPesan: true);
+      return hasil;
+    }
+
+    if (hasil.wajibGantiKataSandi) {
+      state = state.salin(
+        status: StatusOtentikasi.masuk,
+        pengguna: hasil.pengguna,
+        wajibAturKredensial: true,
+        bersihkanPesan: true,
+      );
+      return hasil;
+    }
+
+    final repo = _ref.read(penyediaRepositoriOtentikasi);
+    var pengguna = hasil.pengguna;
+    try {
+      pengguna = await repo.mintaProfilSaya();
+    } catch (_) {}
+    state = state.salin(
+      status: StatusOtentikasi.masuk,
+      pengguna: pengguna,
+      wajibAturKredensial: false,
+      bersihkanPesan: true,
+    );
+    unawaited(LayananPencatatAktivitas.instance.catat(JenisAktivitas.masuk));
+    return hasil;
+  }
+
+  Future<void> lanjutkanSetelahKelola() async {
+    final repo = _ref.read(penyediaRepositoriOtentikasi);
+    var pengguna = state.pengguna;
+    try {
+      pengguna = await repo.mintaProfilSaya();
+    } catch (_) {}
     state = state.salin(
       status: StatusOtentikasi.masuk,
       pengguna: pengguna,
       bersihkanPesan: true,
     );
+    unawaited(LayananPencatatAktivitas.instance.catat(JenisAktivitas.masuk));
   }
 
-  Future<void> daftar({
-    required String nik,
-    required String namaLengkap,
-    required String surel,
-    required String noHp,
-    required String kataSandi,
-  }) async {
-    final repo = _ref.read(penyediaRepositoriOtentikasi);
-    final hasil = await repo.daftar(
-      nik: nik,
-      namaLengkap: namaLengkap,
-      surel: surel,
-      noHp: noHp,
-      kataSandi: kataSandi,
-    );
+  void tandaiSudahMasukDariOtp(
+    Pengguna pengguna, {
+    bool wajibAturKredensial = false,
+  }) {
     state = state.salin(
       status: StatusOtentikasi.masuk,
-      pengguna: hasil.pengguna,
+      pengguna: pengguna,
+      wajibAturKredensial: wajibAturKredensial,
       bersihkanPesan: true,
     );
+    if (!wajibAturKredensial) {
+      unawaited(LayananPencatatAktivitas.instance.catat(JenisAktivitas.masuk));
+    }
+  }
+
+  void selesaiAturKredensial({String? username}) {
+    final pengguna = state.pengguna;
+    state = state.salin(
+      pengguna: pengguna != null && username != null && username.isNotEmpty
+          ? pengguna.salin(username: username)
+          : pengguna,
+      wajibAturKredensial: false,
+      bersihkanPesan: true,
+    );
+    unawaited(LayananPencatatAktivitas.instance.catat(JenisAktivitas.masuk));
   }
 
   Future<void> keluar() async {
+    await LayananPencatatAktivitas.instance.catat(JenisAktivitas.keluar);
+    await LayananPencatatAktivitas.instance.flush();
     if (_demo) {
       _demo = false;
       await KlienJaringan.instance.bersihkanOtentikasi();
@@ -257,5 +337,5 @@ class PengaturOtentikasi extends StateNotifier<KondisiOtentikasi> {
 
 final penyediaOtentikasi =
     StateNotifierProvider<PengaturOtentikasi, KondisiOtentikasi>((ref) {
-  return PengaturOtentikasi(ref);
-});
+      return PengaturOtentikasi(ref);
+    });
