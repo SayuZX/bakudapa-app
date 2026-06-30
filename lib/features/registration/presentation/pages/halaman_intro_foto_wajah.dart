@@ -57,7 +57,7 @@ class HalamanIntroFotoWajah extends ConsumerWidget {
             context.push(NamaRute.daftarKameraFotoWajah);
           },
           style: FilledButton.styleFrom(
-            backgroundColor: Warna.merahUtama,
+            backgroundColor: Warna.primer,
             foregroundColor: Colors.white,
             shape: const StadiumBorder(),
             textStyle: const TextStyle(
