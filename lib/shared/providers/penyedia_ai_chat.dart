@@ -1,10 +1,12 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ai/model_ai_chat.dart';
 import '../../core/config/storage_keys.dart';
 import '../../core/errors/kesalahan.dart';
+import '../../core/localization/teks.dart';
 import '../../core/services/penyimpanan_aman.dart';
 import '../../features/ai/domain/repositori_ai_chat.dart';
 import 'penyedia_bahasa.dart';
@@ -50,10 +52,14 @@ class PengaturAiChat extends StateNotifier<KondisiAiChat> {
 
   static const int _maksSimpan = 30;
 
+  String? _pertanyaanTerakhir;
+  bool _lanjutkanTerakhir = false;
+  CancelToken? _batal;
+
   Map<String, dynamic> _bangunKonteks() {
     final auth = _ref.read(penyediaOtentikasi);
     final bahasa = _ref.read(penyediaBahasa);
-    final ringkasan = _ref.read(penyediaRingkasanStatus).valueOrNull;
+    final ringkasan = _ref.read(penyediaRingkasanStatus);
     final p = auth.pengguna;
     return {
       'locale': bahasa.kode,
@@ -76,6 +82,8 @@ class PengaturAiChat extends StateNotifier<KondisiAiChat> {
   Future<void> kirim(String pesan) async {
     final isi = pesan.trim();
     if (isi.isEmpty || state.memuat) return;
+    _pertanyaanTerakhir = isi;
+    _lanjutkanTerakhir = false;
     state = state.salin(
       pesan: [
         ...state.pesan,
@@ -86,24 +94,48 @@ class PengaturAiChat extends StateNotifier<KondisiAiChat> {
         ),
       ],
       memuat: true,
+      tidakTersedia: false,
     );
     await _tanya(isi);
   }
 
   Future<void> lanjutkan() async {
     if (state.memuat) return;
-    state = state.salin(memuat: true);
+    _lanjutkanTerakhir = true;
+    state = state.salin(memuat: true, tidakTersedia: false);
     await _tanya('', lanjutkan: true);
   }
 
+  Future<void> cobaLagi() async {
+    if (state.memuat) return;
+    final tanpaGalat = state.pesan.where((p) => !p.terjadiGalat).toList();
+    if (_lanjutkanTerakhir) {
+      state = state.salin(
+        pesan: tanpaGalat,
+        memuat: true,
+        tidakTersedia: false,
+      );
+      await _tanya('', lanjutkan: true);
+      return;
+    }
+    final pertanyaan = _pertanyaanTerakhir;
+    if (pertanyaan == null || pertanyaan.isEmpty) return;
+    state = state.salin(pesan: tanpaGalat, memuat: true, tidakTersedia: false);
+    await _tanya(pertanyaan);
+  }
+
   Future<void> _tanya(String isi, {bool lanjutkan = false}) async {
+    final batal = CancelToken();
+    _batal = batal;
     try {
       final hasil = await _repo.tanya(
         pesan: isi,
         sesiId: state.sesiId,
         konteks: _bangunKonteks(),
         lanjutkan: lanjutkan,
+        batal: batal,
       );
+      if (batal.isCancelled) return;
       state = state.salin(
         sesiId: hasil.sesiId,
         pesan: [
@@ -114,25 +146,68 @@ class PengaturAiChat extends StateNotifier<KondisiAiChat> {
             dibuatPada: DateTime.now(),
             selesai: hasil.selesai,
             aksi: hasil.aksi,
+            saran: hasil.saran,
             butuhOperator: hasil.butuhOperator,
           ),
         ],
         memuat: false,
       );
       _simpan();
+    } on KesalahanBatasFrekuensi catch (e) {
+      if (batal.isCancelled) return;
+      _galat(_pesanGalat(e), butuhOperator: false);
+    } on KesalahanBatasFrekuensiDenganRetry catch (e) {
+      if (batal.isCancelled) return;
+      _galat(
+        _pesanGalat(e),
+        butuhOperator: false,
+        detikCobaUlang: e.detikUlang,
+      );
     } on KesalahanAiTidakTersedia catch (e) {
-      _galat(e.pesan, tidakTersedia: true, butuhOperator: true);
+      if (batal.isCancelled) return;
+      _galat(_pesanGalat(e), tidakTersedia: true, butuhOperator: true);
     } on Kesalahan catch (e) {
-      _galat(e.pesan, butuhOperator: true);
+      if (batal.isCancelled) return;
+      _galat(_pesanGalat(e), butuhOperator: true);
     } catch (_) {
-      _galat('Maaf, terjadi kesalahan. Silakan coba lagi.', butuhOperator: true);
+      if (batal.isCancelled) return;
+      _galat(_pesanGalat(null), butuhOperator: true);
+    } finally {
+      if (identical(_batal, batal)) _batal = null;
     }
+  }
+
+  void batalkan() {
+    if (!state.memuat) return;
+    _batal?.cancel();
+    state = state.salin(memuat: false);
+  }
+
+  Future<void> regenerasi() async {
+    if (state.memuat) return;
+    final pertanyaan = _pertanyaanTerakhir;
+    if (pertanyaan == null || pertanyaan.isEmpty) return;
+    final pesan = [...state.pesan];
+    if (pesan.isNotEmpty && pesan.last.peran == PeranPesanAi.asisten) {
+      pesan.removeLast();
+    }
+    state = state.salin(pesan: pesan, memuat: true, tidakTersedia: false);
+    await _tanya(
+      _lanjutkanTerakhir ? '' : pertanyaan,
+      lanjutkan: _lanjutkanTerakhir,
+    );
+  }
+
+  String _pesanGalat(Kesalahan? e) {
+    final teks = _ref.read(teksProvider);
+    return pesanRamah(e, fallback: teks.galatAiUmum, teks: teks);
   }
 
   void _galat(
     String pesan, {
     bool tidakTersedia = false,
     bool butuhOperator = false,
+    int? detikCobaUlang,
   }) {
     state = state.salin(
       memuat: false,
@@ -146,6 +221,7 @@ class PengaturAiChat extends StateNotifier<KondisiAiChat> {
           terjadiGalat: true,
           pesanGalat: pesan,
           butuhOperator: butuhOperator,
+          detikCobaUlang: detikCobaUlang,
         ),
       ],
     );
@@ -165,9 +241,9 @@ class PengaturAiChat extends StateNotifier<KondisiAiChat> {
       final daftarRaw = data['pesan'];
       final pesan = daftarRaw is List
           ? daftarRaw
-              .whereType<Map>()
-              .map((e) => PesanAi.dariJson(Map<String, dynamic>.from(e)))
-              .toList()
+                .whereType<Map>()
+                .map((e) => PesanAi.dariJson(Map<String, dynamic>.from(e)))
+                .toList()
           : <PesanAi>[];
       if (!mounted) return;
       if (pesan.isNotEmpty || (sesiId != null && sesiId.isNotEmpty)) {
@@ -197,10 +273,10 @@ class PengaturAiChat extends StateNotifier<KondisiAiChat> {
   }
 }
 
-final penyediaAiChat =
-    StateNotifierProvider<PengaturAiChat, KondisiAiChat>((ref) {
-  final pengatur =
-      PengaturAiChat(ref.watch(penyediaRepositoriAiChat), ref);
+final penyediaAiChat = StateNotifierProvider<PengaturAiChat, KondisiAiChat>((
+  ref,
+) {
+  final pengatur = PengaturAiChat(ref.watch(penyediaRepositoriAiChat), ref);
   ref.listen<KondisiOtentikasi>(penyediaOtentikasi, (sebelum, sesudah) {
     if (sesudah.status != StatusOtentikasi.masuk) {
       pengatur.mulaiSesiBaru();
