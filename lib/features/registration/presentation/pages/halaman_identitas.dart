@@ -15,10 +15,12 @@ import '../../../../core/theme/warna.dart';
 import '../../../../core/utils/format.dart';
 import '../../../../core/utils/penyamaran.dart';
 import '../../../../core/utils/validasi.dart';
+import '../../../../shared/models/wilayah.dart';
 import '../../../../shared/providers/penyedia_bahasa.dart';
 import '../../../../shared/providers/penyedia_muat_global.dart';
 import '../../../../shared/widgets/kotak_isian.dart';
 import '../../../../shared/widgets/kotak_isian_sensitif.dart';
+import '../../../../shared/widgets/pemilih_domisili.dart';
 import '../../data/model/data_registrasi.dart';
 import '../../providers/penyedia_registrasi.dart';
 import '../widgets/stepper_registrasi.dart';
@@ -41,6 +43,9 @@ class _HalamanIdentitasRegistrasiState
   final _surel = TextEditingController();
   DateTime? _tanggal;
   JenisKelamin? _kelamin;
+  Wilayah? _kabupaten;
+  Wilayah? _kecamatan;
+  Wilayah? _desa;
 
   @override
   void initState() {
@@ -56,6 +61,15 @@ class _HalamanIdentitasRegistrasiState
     _surel.text = s.surel;
     _tanggal = s.tanggalLahir;
     _kelamin = s.jenisKelamin;
+    if (s.kabupatenKode.isNotEmpty) {
+      _kabupaten = Wilayah(kode: s.kabupatenKode, nama: s.kabupatenNama);
+    }
+    if (s.kecamatanKode.isNotEmpty) {
+      _kecamatan = Wilayah(kode: s.kecamatanKode, nama: s.kecamatanNama);
+    }
+    if (s.desaKode.isNotEmpty) {
+      _desa = Wilayah(kode: s.desaKode, nama: s.desaNama);
+    }
   }
 
   @override
@@ -77,7 +91,7 @@ class _HalamanIdentitasRegistrasiState
       lastDate: sekarang,
       builder: (_, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: Warna.merahUtama),
+          colorScheme: const ColorScheme.light(primary: Warna.primer),
         ),
         child: child!,
       ),
@@ -94,6 +108,10 @@ class _HalamanIdentitasRegistrasiState
     }
     if (_kelamin == null) {
       context.tampilkanGalat(t.jenisKelaminWajib);
+      return;
+    }
+    if (_kabupaten == null || _kecamatan == null || _desa == null) {
+      context.tampilkanGalat(t.wilayahWajib);
       return;
     }
 
@@ -120,6 +138,12 @@ class _HalamanIdentitasRegistrasiState
       jenisKelamin: _kelamin,
       noHp: '+62$hpInput',
       surel: _surel.text.trim(),
+      kabupatenKode: _kabupaten!.kode,
+      kabupatenNama: _kabupaten!.nama,
+      kecamatanKode: _kecamatan!.kode,
+      kecamatanNama: _kecamatan!.nama,
+      desaKode: _desa!.kode,
+      desaNama: _desa!.nama,
     ));
 
     final ok = await muat.jalankan<bool>(
@@ -233,6 +257,19 @@ class _HalamanIdentitasRegistrasiState
                         Validasi.wajib(v, label: t.tempatLahirLabel),
                     wajib: true,
                   ),
+                  const SizedBox(height: Jarak.xl),
+                  PemilihDomisili(
+                    label: t.alamatDomisili,
+                    kabupaten: _kabupaten,
+                    kecamatan: _kecamatan,
+                    desa: _desa,
+                    wajib: true,
+                    saatPilih: (h) => setState(() {
+                      _kabupaten = h.kabupaten;
+                      _kecamatan = h.kecamatan;
+                      _desa = h.desa;
+                    }),
+                  ),
                   const SizedBox(height: Jarak.lg),
                   KotakIsian(
                     label: t.nomorHp,
@@ -275,7 +312,7 @@ class _HalamanIdentitasRegistrasiState
                 child: FilledButton(
                   onPressed: kondisi.memuat ? null : _lanjut,
                   style: FilledButton.styleFrom(
-                    backgroundColor: Warna.merahUtama,
+                    backgroundColor: Warna.primer,
                     disabledBackgroundColor: Warna.netral200,
                     foregroundColor: Colors.white,
                     elevation: 0,
