@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
+import '../../../../core/enums/jenis_kebijakan.dart';
 import '../../../../core/extensions/konteks.dart';
 import '../../../../core/localization/teks.dart';
 import '../../../../core/network/penjaga_jaringan.dart';
@@ -10,6 +11,8 @@ import '../../../../core/router/nama_rute.dart';
 import '../../../../core/system/penjaga_maintenance.dart';
 import '../../../../core/theme/dimensi.dart';
 import '../../../../core/theme/warna.dart';
+import '../../../help/providers/penyedia_kebijakan.dart';
+import '../../data/model/data_registrasi.dart';
 import '../../providers/penyedia_registrasi.dart';
 import '../widgets/stepper_registrasi.dart';
 
@@ -39,12 +42,43 @@ class _HalamanKebijakanRegistrasiState
   }
 
   Future<void> _bacaDanSetujui({
+    required JenisKebijakan jenis,
     required String jalur,
-    required ValueChanged<bool> saatBerubah,
   }) async {
     final hasil = await context.push<bool>(jalur);
-    if (hasil == true && mounted) {
-      saatBerubah(true);
+    if (hasil != true || !mounted) return;
+    String? versi;
+    try {
+      versi = (await ref.read(penyediaKontenKebijakan(jenis).future)).versi;
+    } catch (_) {}
+    if (!mounted) return;
+    _setujui(jenis, true, versi: versi);
+  }
+
+  void _setujui(JenisKebijakan jenis, bool nilai, {String? versi}) {
+    final p = ref.read(penyediaRegistrasi).sesi.persetujuan;
+    var baru = _terapkan(p, jenis, nilai);
+    if (nilai && versi != null && versi.isNotEmpty) {
+      baru = baru.salin(versi: {...p.versi, jenis.value: versi});
+    }
+    ref.read(penyediaRegistrasi.notifier).perbaruiPersetujuan(baru);
+  }
+
+  PersetujuanKebijakan _terapkan(
+      PersetujuanKebijakan p, JenisKebijakan jenis, bool nilai) {
+    switch (jenis) {
+      case JenisKebijakan.privasi:
+        return p.salin(privasi: nilai);
+      case JenisKebijakan.layanan:
+        return p.salin(layanan: nilai);
+      case JenisKebijakan.penafian:
+        return p.salin(penafian: nilai);
+      case JenisKebijakan.biometrik:
+        return p.salin(biometrik: nilai);
+      case JenisKebijakan.kebenaranData:
+        return p.salin(kebenaranData: nilai);
+      case JenisKebijakan.syaratKetentuan:
+        return p;
     }
   }
 
@@ -53,7 +87,6 @@ class _HalamanKebijakanRegistrasiState
     final kondisi = ref.watch(penyediaRegistrasi);
     final t = ref.watch(teksProvider);
     final p = kondisi.sesi.persetujuan;
-    final aksi = ref.read(penyediaRegistrasi.notifier);
 
     return Scaffold(
       backgroundColor: Warna.permukaan,
@@ -95,12 +128,10 @@ class _HalamanKebijakanRegistrasiState
                   judul: t.kebijakanPrivasi,
                   deskripsi: t.kebijakanPrivasiDeskripsi,
                   labelBaca: t.bacaKebijakanPrivasi,
-                  jalur: NamaRute.kebijakanPrivasiSetuju,
-                  saatBerubah: (v) =>
-                      aksi.perbaruiPersetujuan(p.salin(privasi: v)),
-                  saatBaca: (cb) => _bacaDanSetujui(
+                  saatBerubah: (v) => _setujui(JenisKebijakan.privasi, v),
+                  saatBaca: () => _bacaDanSetujui(
+                    jenis: JenisKebijakan.privasi,
                     jalur: NamaRute.kebijakanPrivasiSetuju,
-                    saatBerubah: cb,
                   ),
                 ),
                 _IsianPersetujuan(
@@ -108,12 +139,10 @@ class _HalamanKebijakanRegistrasiState
                   judul: t.kebijakanLayanan,
                   deskripsi: t.kebijakanLayananDeskripsi,
                   labelBaca: t.bacaKebijakanLayanan,
-                  jalur: NamaRute.kebijakanLayananSetuju,
-                  saatBerubah: (v) =>
-                      aksi.perbaruiPersetujuan(p.salin(layanan: v)),
-                  saatBaca: (cb) => _bacaDanSetujui(
+                  saatBerubah: (v) => _setujui(JenisKebijakan.layanan, v),
+                  saatBaca: () => _bacaDanSetujui(
+                    jenis: JenisKebijakan.layanan,
                     jalur: NamaRute.kebijakanLayananSetuju,
-                    saatBerubah: cb,
                   ),
                 ),
                 _IsianPersetujuan(
@@ -121,12 +150,10 @@ class _HalamanKebijakanRegistrasiState
                   judul: t.penafianSistemJudulLengkap,
                   deskripsi: t.penafianSistemDeskripsi,
                   labelBaca: t.bacaPenafianSistem,
-                  jalur: NamaRute.penafianSistemSetuju,
-                  saatBerubah: (v) =>
-                      aksi.perbaruiPersetujuan(p.salin(penafian: v)),
-                  saatBaca: (cb) => _bacaDanSetujui(
+                  saatBerubah: (v) => _setujui(JenisKebijakan.penafian, v),
+                  saatBaca: () => _bacaDanSetujui(
+                    jenis: JenisKebijakan.penafian,
                     jalur: NamaRute.penafianSistemSetuju,
-                    saatBerubah: cb,
                   ),
                 ),
                 _IsianPersetujuan(
@@ -134,12 +161,10 @@ class _HalamanKebijakanRegistrasiState
                   judul: t.pemrosesanDataBiometrik,
                   deskripsi: t.pemrosesanDataBiometrikDeskripsi,
                   labelBaca: t.bacaPersetujuanBiometrik,
-                  jalur: NamaRute.kebijakanBiometrikSetuju,
-                  saatBerubah: (v) =>
-                      aksi.perbaruiPersetujuan(p.salin(biometrik: v)),
-                  saatBaca: (cb) => _bacaDanSetujui(
+                  saatBerubah: (v) => _setujui(JenisKebijakan.biometrik, v),
+                  saatBaca: () => _bacaDanSetujui(
+                    jenis: JenisKebijakan.biometrik,
                     jalur: NamaRute.kebijakanBiometrikSetuju,
-                    saatBerubah: cb,
                   ),
                 ),
                 _IsianPersetujuan(
@@ -147,12 +172,11 @@ class _HalamanKebijakanRegistrasiState
                   judul: t.pernyataanKebenaranData,
                   deskripsi: t.pernyataanKebenaranDataDeskripsi,
                   labelBaca: t.bacaPernyataanKebenaran,
-                  jalur: NamaRute.pernyataanKebenaranDataSetuju,
                   saatBerubah: (v) =>
-                      aksi.perbaruiPersetujuan(p.salin(kebenaranData: v)),
-                  saatBaca: (cb) => _bacaDanSetujui(
+                      _setujui(JenisKebijakan.kebenaranData, v),
+                  saatBaca: () => _bacaDanSetujui(
+                    jenis: JenisKebijakan.kebenaranData,
                     jalur: NamaRute.pernyataanKebenaranDataSetuju,
-                    saatBerubah: cb,
                   ),
                 ),
               ],
@@ -168,7 +192,7 @@ class _HalamanKebijakanRegistrasiState
                 child: FilledButton(
                   onPressed: (!p.semua || kondisi.memuat) ? null : _submit,
                   style: FilledButton.styleFrom(
-                    backgroundColor: Warna.merahUtama,
+                    backgroundColor: Warna.primer,
                     disabledBackgroundColor: Warna.netral200,
                     foregroundColor: Colors.white,
                     shape: const StadiumBorder(),
@@ -201,7 +225,6 @@ class _IsianPersetujuan extends StatelessWidget {
     required this.judul,
     required this.deskripsi,
     required this.labelBaca,
-    required this.jalur,
     required this.saatBerubah,
     required this.saatBaca,
   });
@@ -210,9 +233,8 @@ class _IsianPersetujuan extends StatelessWidget {
   final String judul;
   final String deskripsi;
   final String labelBaca;
-  final String jalur;
   final ValueChanged<bool> saatBerubah;
-  final void Function(ValueChanged<bool> autoCheck) saatBaca;
+  final VoidCallback saatBaca;
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +245,7 @@ class _IsianPersetujuan extends StatelessWidget {
           color: Warna.permukaan,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: nilai ? Warna.merahUtama : Warna.garis,
+            color: nilai ? Warna.primer : Warna.garis,
             width: nilai ? 1.4 : 1,
           ),
         ),
@@ -231,13 +253,11 @@ class _IsianPersetujuan extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             InkWell(
-              // Tap area judul: kalau belum centang → harus baca dulu.
-              // Kalau sudah centang → boleh uncheck langsung.
               onTap: () {
                 if (nilai) {
                   saatBerubah(false);
                 } else {
-                  saatBaca(saatBerubah);
+                  saatBaca();
                 }
               },
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
@@ -250,7 +270,7 @@ class _IsianPersetujuan extends StatelessWidget {
                       nilai
                           ? HugeIcons.strokeRoundedCheckmarkSquare02
                           : HugeIcons.strokeRoundedSquare,
-                      color: nilai ? Warna.merahUtama : Warna.netral400,
+                      color: nilai ? Warna.primer : Warna.netral400,
                       size: 22,
                     ),
                     const SizedBox(width: 10),
@@ -280,7 +300,7 @@ class _IsianPersetujuan extends StatelessWidget {
               ),
             ),
             InkWell(
-              onTap: () => saatBaca(saatBerubah),
+              onTap: saatBaca,
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
               child: Container(
                 width: double.infinity,
