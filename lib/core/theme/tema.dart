@@ -11,12 +11,12 @@ class Tema {
 
   static ThemeData terang() {
     final ColorScheme skema = ColorScheme.fromSeed(
-      seedColor: Warna.merahUtama,
+      seedColor: Warna.primer,
       brightness: Brightness.light,
-      primary: Warna.merahUtama,
+      primary: Warna.primer,
       onPrimary: Warna.putih,
-      primaryContainer: Warna.merahLembut,
-      onPrimaryContainer: Warna.merahGelap,
+      primaryContainer: Warna.primerLembut,
+      onPrimaryContainer: Warna.primerGelap,
       surface: Warna.permukaan,
       onSurface: Warna.teksUtama,
       surfaceContainerHighest: Warna.netral100,
@@ -70,7 +70,7 @@ class Tema {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         hintStyle: teksTema.bodyMedium?.copyWith(color: Warna.teksKetiga),
         labelStyle: teksTema.titleSmall?.copyWith(color: Warna.teksKedua),
-        floatingLabelStyle: teksTema.titleSmall?.copyWith(color: Warna.merahUtama),
+        floatingLabelStyle: teksTema.titleSmall?.copyWith(color: Warna.primer),
         prefixIconColor: Warna.teksKedua,
         suffixIconColor: Warna.teksKedua,
         border: OutlineInputBorder(
@@ -83,7 +83,7 @@ class Tema {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Sudut.md),
-          borderSide: const BorderSide(color: Warna.merahUtama, width: 1.4),
+          borderSide: const BorderSide(color: Warna.primer, width: 1.4),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Sudut.md),
@@ -101,7 +101,7 @@ class Tema {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: Warna.merahUtama,
+          backgroundColor: Warna.primer,
           foregroundColor: Warna.putih,
           disabledBackgroundColor: Warna.netral200,
           disabledForegroundColor: Warna.teksNonaktif,
@@ -124,7 +124,7 @@ class Tema {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: Warna.merahUtama,
+          foregroundColor: Warna.primer,
           textStyle: teksTema.titleSmall?.copyWith(fontWeight: FontWeight.w600),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Sudut.sm)),
@@ -138,7 +138,7 @@ class Tema {
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return Warna.merahUtama;
+          if (states.contains(WidgetState.selected)) return Warna.primer;
           return Warna.permukaan;
         }),
         checkColor: WidgetStateProperty.all(Warna.putih),
@@ -151,32 +151,32 @@ class Tema {
           return Warna.permukaan;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return Warna.merahUtama;
+          if (states.contains(WidgetState.selected)) return Warna.primer;
           return Warna.netral300;
         }),
         trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: Warna.netral100,
-        selectedColor: Warna.merahLembut,
+        selectedColor: Warna.primerLembut,
         labelStyle: teksTema.labelMedium,
-        secondaryLabelStyle: teksTema.labelMedium?.copyWith(color: Warna.merahGelap),
+        secondaryLabelStyle: teksTema.labelMedium?.copyWith(color: Warna.primerGelap),
         side: const BorderSide(color: Colors.transparent),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Sudut.pil)),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Warna.permukaan,
-        indicatorColor: Warna.merahLembut,
+        indicatorColor: Warna.primerLembut,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return teksTema.labelSmall?.copyWith(color: Warna.merahUtama, fontWeight: FontWeight.w700);
+            return teksTema.labelSmall?.copyWith(color: Warna.primer, fontWeight: FontWeight.w700);
           }
           return teksTema.labelSmall?.copyWith(color: Warna.teksKetiga);
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: Warna.merahUtama, size: 24);
+            return const IconThemeData(color: Warna.primer, size: 24);
           }
           return const IconThemeData(color: Warna.teksKetiga, size: 24);
         }),
@@ -189,7 +189,7 @@ class Tema {
         backgroundColor: Warna.netral900,
         contentTextStyle: teksTema.bodyMedium?.copyWith(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Sudut.md)),
-        actionTextColor: Warna.merahLembut,
+        actionTextColor: Warna.primerLembut,
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: Warna.permukaan,
@@ -214,7 +214,7 @@ class Tema {
         textStyle: teksTema.bodySmall?.copyWith(color: Colors.white),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: Warna.merahUtama,
+        color: Warna.primer,
         circularTrackColor: Warna.netral200,
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
