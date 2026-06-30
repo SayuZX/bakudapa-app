@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-   Tolak backup otomatis Google ke Drive untuk data sensitif aplikasi.
-   File aplikasi BAKUDAPA MOBILE mengandung token dan data biometrik metadata.
--->
+
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" />
