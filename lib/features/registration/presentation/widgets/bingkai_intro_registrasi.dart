@@ -123,7 +123,7 @@ class _BarisLangkah extends StatelessWidget {
           '$nomor)',
           style: teks.titleSmall?.copyWith(
             fontWeight: FontWeight.w800,
-            color: Warna.merahUtama,
+            color: Warna.primer,
             height: 1.4,
           ),
         ),
