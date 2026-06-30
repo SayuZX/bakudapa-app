@@ -351,7 +351,7 @@ class _TombolAksiPenuh extends StatelessWidget {
           onPressed: aksi.onTekan,
           style: FilledButton.styleFrom(
             backgroundColor:
-                aksi.destruktif ? Warna.bahaya : Warna.merahUtama,
+                aksi.destruktif ? Warna.bahaya : Warna.primer,
             foregroundColor: Colors.white,
             elevation: 0,
             shape: const StadiumBorder(),
