@@ -68,8 +68,11 @@ PEMEGANG_HAKI + TAHUN_CIPTA + package
 ## 3. Detail Desain
 
 ### 3.1 Identitas → seed
-`seed = SHA256(PEMEGANG_HAKI + "|" + TAHUN_CIPTA + "|" + package)`.
-Nilai saat ini: `PEMEGANG_HAKI="RAIHAN NUGROHO"`, `TAHUN_CIPTA="2024"`.
+`seed = SHA256(string_kepemilikan_ter-obfuscate)` di mana string kepemilikan
+disimpan ter-obfuscate (`SANDI ⊕ KUNCI` = `bukaSandi()`) di dalam `.so` — TIDAK
+pernah plaintext di source/manifest. `SHA256(bukaSandi)` = `SIDIK_KEPEMILIKAN`
+(`dfac89fc…381f1`). Nama pemegang asli tak diekspos; `PEMEGANG_HAKI="GATECH"`
+di BuildConfig/manifest hanya decoy publik, terpisah dari seed.
 8 byte pertama tetap dipakai sebagai `magic` agar kompatibel pemeriksaan lama.
 
 ### 3.2 Penanaman fragmen Assembly

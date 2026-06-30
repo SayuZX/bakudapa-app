@@ -1,8 +1,22 @@
+import java.io.FileInputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
+val stempelBuild: String =
+    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(Date())
 
 android {
     namespace = "org.gatechstudio.malutprovkab"
@@ -14,6 +28,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "org.gatechstudio.malutprovkab"
         minSdk = flutter.minSdkVersion
@@ -21,12 +39,57 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
+        buildConfigField("String", "PEMEGANG_HAKI", "\"GATECH\"")
+        buildConfigField("String", "TAHUN_CIPTA", "\"2024\"")
+        buildConfigField("String", "NAMA_APLIKASI", "\"BAKUDAPA MOBILE\"")
+        buildConfigField("String", "INSTANSI", "\"Disdukcapil Provinsi Maluku Utara\"")
+        buildConfigField("String", "BUILD_TIMESTAMP", "\"$stempelBuild\"")
+        buildConfigField(
+            "boolean",
+            "BUILD_LOKAL",
+            "${project.hasProperty("allowDebugSigning")}",
+        )
+        buildConfigField(
+            "boolean",
+            "PAKSA_WATERMARK",
+            "${project.hasProperty("paksaWatermark")}",
+        )
+        buildConfigField(
+            "boolean",
+            "SIMULASI_TANPA_NATIVE",
+            "${project.hasProperty("simulasiTanpaNative")}",
+        )
+
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
         }
 
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+            }
+        }
+
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
         }
     }
 
@@ -40,7 +103,16 @@ android {
             )
 
             isCrunchPngs = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else if (project.hasProperty("allowDebugSigning")) {
+                signingConfigs.getByName("debug")
+            } else {
+                throw GradleException(
+                    "key.properties tidak ditemukan." +
+                    "Untuk build lokal non rilis, jalankan dengan -PallowDebugSigning."
+                )
+            }
         }
 
         debug {
@@ -51,7 +123,9 @@ android {
 
     splits {
         abi {
-            isEnable = true
+            isEnable = gradle.startParameter.taskNames.none {
+                it.contains("bundle", ignoreCase = true)
+            }
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86_64")
             isUniversalApk = true
