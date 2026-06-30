@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../../../../core/extensions/konteks.dart';
 import '../../../../core/localization/teks.dart';
@@ -55,7 +56,7 @@ class HalamanSuksesRegistrasi extends ConsumerWidget {
                       ukuran: 120,
                       tebal: 6,
                       terisi: true,
-                      warnaCheck: Warna.merahUtama,
+                      warnaCheck: Warna.primer,
                     ),
                   ],
                 ),
@@ -69,6 +70,34 @@ class HalamanSuksesRegistrasi extends ConsumerWidget {
                 style: context.teks.bodyMedium?.copyWith(
                   color: Warna.teksKedua,
                   height: 1.55,
+                ),
+              ),
+              const SizedBox(height: Jarak.lg),
+              Container(
+                padding: const EdgeInsets.all(Jarak.md),
+                decoration: BoxDecoration(
+                  color: Warna.primerLembut,
+                  borderRadius: BorderRadius.circular(Sudut.md),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      HugeIcons.strokeRoundedMail01,
+                      size: 18,
+                      color: Warna.primer,
+                    ),
+                    const SizedBox(width: Jarak.sm),
+                    Expanded(
+                      child: Text(
+                        t.infoKataSandiSementara,
+                        style: context.teks.bodySmall?.copyWith(
+                          color: Warna.teksKedua,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: Jarak.lg),
@@ -104,7 +133,7 @@ class HalamanSuksesRegistrasi extends ConsumerWidget {
                     }
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: Warna.merahUtama,
+                    backgroundColor: Warna.primer,
                     foregroundColor: Colors.white,
                     shape: const StadiumBorder(),
                     textStyle: const TextStyle(
