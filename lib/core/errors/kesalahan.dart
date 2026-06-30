@@ -1,3 +1,6 @@
+import '../../shared/models/perangkat_aktif.dart';
+import '../localization/teks.dart';
+
 sealed class Kesalahan implements Exception {
   const Kesalahan(this.pesan, {this.kode});
 
@@ -8,8 +11,11 @@ sealed class Kesalahan implements Exception {
   String toString() => 'Kesalahan($kode): $pesan';
 }
 
-String pesanRamah(Object? e, {required String fallback}) {
-  return e is Kesalahan ? e.pesan : fallback;
+String pesanRamah(Object? e, {required String fallback, Teks? teks}) {
+  if (e is! Kesalahan) return fallback;
+  final pesan = teks?.pesanKesalahan(e.kode);
+  if (pesan != null) return pesan;
+  return e.pesan.isNotEmpty ? e.pesan : fallback;
 }
 
 class KesalahanJaringan extends Kesalahan {
@@ -136,6 +142,28 @@ class KesalahanSumberKosong extends Kesalahan {
     : super(kode: 'RESOURCE_EMPTY');
 }
 
+class KesalahanBatasPerangkat extends Kesalahan {
+  const KesalahanBatasPerangkat({
+    String pesan = 'Akun sudah digunakan pada 2 perangkat aktif.',
+    this.perangkatAktif = const [],
+    this.batas,
+  }) : super(pesan, kode: 'BATAS_PERANGKAT_TERCAPAI');
+
+  final List<PerangkatAktif> perangkatAktif;
+  final int? batas;
+}
+
+class KesalahanSesiTidakValid extends Kesalahan {
+  const KesalahanSesiTidakValid([super.pesan = 'Perangkat yang dipilih tidak valid.'])
+    : super(kode: 'SESI_TIDAK_VALID');
+}
+
+class KesalahanSesiSudahTidakAktif extends Kesalahan {
+  const KesalahanSesiSudahTidakAktif([
+    super.pesan = 'Perangkat sudah tidak aktif.',
+  ]) : super(kode: 'SESI_SUDAH_TIDAK_AKTIF');
+}
+
 class KesalahanBatasFrekuensiDenganRetry extends Kesalahan {
   const KesalahanBatasFrekuensiDenganRetry({
     String pesan = 'Terlalu banyak percobaan. Coba lagi nanti.',
@@ -149,12 +177,19 @@ class KodeKesalahanBackend {
   const KodeKesalahanBackend._();
 
   static const validationError = 'VALIDATION_ERROR';
+  static const validationFailed = 'VALIDATION_FAILED';
+  static const badRequest = 'BAD_REQUEST';
   static const unauthorized = 'UNAUTHORIZED';
+  static const forbidden = 'FORBIDDEN';
   static const invalidCredentials = 'INVALID_CREDENTIALS';
   static const accountBlocked = 'ACCOUNT_BLOCKED';
   static const notFound = 'NOT_FOUND';
   static const conflict = 'CONFLICT';
+  static const duplicateRecord = 'DUPLICATE_RECORD';
+  static const payloadTooLarge = 'PAYLOAD_TOO_LARGE';
   static const rateLimited = 'RATE_LIMITED';
+  static const internalServerError = 'INTERNAL_SERVER_ERROR';
+  static const serviceUnavailable = 'SERVICE_UNAVAILABLE';
   static const maintenanceMode = 'MAINTENANCE_MODE';
   static const aiUnavailable = 'AI_UNAVAILABLE';
   static const aiError = 'AI_ERROR';
@@ -162,4 +197,11 @@ class KodeKesalahanBackend {
   static const faceServiceError = 'FACE_SERVICE_ERROR';
   static const facePhotoBlocked = 'FACE_PHOTO_BLOCKED';
   static const resourceEmpty = 'RESOURCE_EMPTY';
+  static const batasPerangkatTercapai = 'BATAS_PERANGKAT_TERCAPAI';
+  static const sessionRevoked = 'SESSION_REVOKED';
+  static const invalidRefreshToken = 'INVALID_REFRESH_TOKEN';
+  static const sesiTidakValid = 'SESI_TIDAK_VALID';
+  static const sesiSudahTidakAktif = 'SESI_SUDAH_TIDAK_AKTIF';
+  static const storageNotConfigured = 'STORAGE_NOT_CONFIGURED';
+  static const storageError = 'STORAGE_ERROR';
 }
