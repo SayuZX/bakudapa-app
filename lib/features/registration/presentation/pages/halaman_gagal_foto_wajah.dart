@@ -265,7 +265,7 @@ class _Aksi extends ConsumerWidget {
             context.go(NamaRute.daftarFotoWajah);
           },
           style: FilledButton.styleFrom(
-            backgroundColor: Warna.merahUtama,
+            backgroundColor: Warna.primer,
             foregroundColor: Colors.white,
             shape: const StadiumBorder(),
             textStyle: const TextStyle(
@@ -302,7 +302,7 @@ class _Aksi extends ConsumerWidget {
             child: FilledButton(
               onPressed: () => context.go(NamaRute.daftarKameraFotoWajah),
               style: FilledButton.styleFrom(
-                backgroundColor: Warna.merahUtama,
+                backgroundColor: Warna.primer,
                 foregroundColor: Colors.white,
                 shape: const StadiumBorder(),
                 textStyle: const TextStyle(
