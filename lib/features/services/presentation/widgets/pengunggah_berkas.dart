@@ -2,198 +2,280 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/errors/kesalahan.dart';
 import '../../../../core/extensions/konteks.dart';
+import '../../../../core/localization/teks.dart';
 import '../../../../core/theme/dimensi.dart';
 import '../../../../core/theme/warna.dart';
 import '../../../../core/utils/validasi_berkas.dart';
+import '../../domain/definisi_formulir.dart';
 
-class PengunggahBerkas extends StatefulWidget {
+class PengunggahBerkas extends ConsumerWidget {
   const PengunggahBerkas({
     super.key,
-    required this.label,
+    required this.dokumen,
     required this.berkas,
-    required this.saatBerubah,
-    this.wajib = true,
+    required this.saatUbah,
+    this.galat,
   });
 
-  final String label;
+  final DefinisiDokumen dokumen;
   final File? berkas;
-  final ValueChanged<File?> saatBerubah;
-  final bool wajib;
+  final ValueChanged<File?> saatUbah;
+  final String? galat;
 
-  @override
-  State<PengunggahBerkas> createState() => _PengunggahBerkasState();
-}
-
-class _PengunggahBerkasState extends State<PengunggahBerkas> {
-  bool _sibuk = false;
-
-  Future<void> _pilihGambar(ImageSource sumber) async {
-    setState(() => _sibuk = true);
-    try {
-      final picker = ImagePicker();
-      final hasil = await picker.pickImage(
-        source: sumber,
-        imageQuality: 80,
-        maxWidth: 1600,
-      );
-      if (hasil == null) return;
-      final berkas = File(hasil.path);
-      await ValidasiBerkas.periksa(berkas);
-      widget.saatBerubah(berkas);
-    } on KesalahanUnggah catch (e) {
-      if (!mounted) return;
-      context.tampilkanPesan(e.pesan, galat: true);
-    } catch (_) {
-      if (!mounted) return;
-      context.tampilkanPesan('Gagal memilih berkas.', galat: true);
-    } finally {
-      if (mounted) setState(() => _sibuk = false);
-    }
-  }
-
-  Future<void> _pilihBerkas() async {
-    setState(() => _sibuk = true);
-    try {
-      final hasil = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-        allowMultiple: false,
-      );
-      if (hasil == null || hasil.files.isEmpty) return;
-      final path = hasil.files.single.path;
-      if (path == null) return;
-      final berkas = File(path);
-      await ValidasiBerkas.periksa(berkas);
-      widget.saatBerubah(berkas);
-    } on KesalahanUnggah catch (e) {
-      if (!mounted) return;
-      context.tampilkanPesan(e.pesan, galat: true);
-    } catch (_) {
-      if (!mounted) return;
-      context.tampilkanPesan('Gagal memilih berkas.', galat: true);
-    } finally {
-      if (mounted) setState(() => _sibuk = false);
-    }
-  }
-
-  void _bukaPilihan() {
-    showModalBottomSheet<void>(
+  Future<void> _pilihSumber(BuildContext context, Teks t) async {
+    final sumber = await showModalBottomSheet<_SumberBerkas>(
       context: context,
-      builder: (sheet) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(HugeIcons.strokeRoundedCamera01),
-              title: const Text('Ambil Foto'),
-              onTap: () {
-                Navigator.pop(sheet);
-                _pilihGambar(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(HugeIcons.strokeRoundedImage01),
-              title: const Text('Pilih dari Galeri'),
-              onTap: () {
-                Navigator.pop(sheet);
-                _pilihGambar(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(HugeIcons.strokeRoundedFile01),
-              title: const Text('Pilih Berkas (PDF/JPG/PNG)'),
-              onTap: () {
-                Navigator.pop(sheet);
-                _pilihBerkas();
-              },
-            ),
-            const SizedBox(height: Jarak.sm),
-          ],
-        ),
-      ),
+      useRootNavigator: true,
+      backgroundColor: Warna.permukaan,
+      builder: (_) => _LembarSumber(teks: t),
     );
+    if (sumber == null || !context.mounted) return;
+    try {
+      File? terpilih;
+      switch (sumber) {
+        case _SumberBerkas.kamera:
+          final foto = await ImagePicker().pickImage(
+            source: ImageSource.camera,
+            imageQuality: 82,
+            maxWidth: 2200,
+          );
+          if (foto != null) terpilih = File(foto.path);
+        case _SumberBerkas.galeri:
+          final foto = await ImagePicker().pickImage(
+            source: ImageSource.gallery,
+            imageQuality: 82,
+            maxWidth: 2200,
+          );
+          if (foto != null) terpilih = File(foto.path);
+        case _SumberBerkas.berkas:
+          final hasil = await FilePicker.platform.pickFiles(
+            type: FileType.custom,
+            allowedExtensions: _ekstensiIzin(),
+          );
+          final jalur = hasil?.files.single.path;
+          if (jalur != null) terpilih = File(jalur);
+      }
+      if (terpilih == null) return;
+      await ValidasiBerkas.periksa(
+        terpilih,
+        maksByte: dokumen.maksByte,
+        mimeIzin: dokumen.mimeTypes,
+      );
+      saatUbah(terpilih);
+    } on Kesalahan catch (e) {
+      if (context.mounted) context.tampilkanGalat(e.pesan);
+    } catch (_) {
+      if (context.mounted) {
+        context.tampilkanGalat(t.gagalPilihBerkas);
+      }
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final berkas = widget.berkas;
-
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(teksProvider);
+    final label = t.katalog(dokumen.label);
+    final terisi = berkas != null;
+    final adaGalat = galat != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(widget.label, style: context.teks.titleSmall),
-            if (widget.wajib)
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text('*', style: context.teks.titleSmall?.copyWith(color: Warna.bahaya)),
-              ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        InkWell(
-          onTap: _sibuk ? null : _bukaPilihan,
-          borderRadius: BorderRadius.circular(Sudut.md),
-          child: Container(
-            padding: const EdgeInsets.all(Jarak.md),
-            decoration: BoxDecoration(
-              color: Warna.permukaan,
-              border: Border.all(
-                color: berkas == null ? Warna.garis : Warna.merahUtama,
-                style: berkas == null ? BorderStyle.solid : BorderStyle.solid,
-              ),
-              borderRadius: BorderRadius.circular(Sudut.md),
+        Material(
+          color: terisi ? Warna.suksesLembut : Warna.permukaan,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Sudut.md),
+            side: BorderSide(
+              color: adaGalat
+                  ? Warna.bahaya
+                  : terisi
+                      ? Warna.sukses
+                      : Warna.garisTegas,
             ),
-            child: Row(
-              children: [
-                Icon(
-                  berkas == null
-                      ? HugeIcons.strokeRoundedUpload01
-                      : HugeIcons.strokeRoundedFileVerified,
-                  color: berkas == null ? Warna.teksKedua : Warna.merahUtama,
-                  size: 22,
-                ),
-                const SizedBox(width: Jarak.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        berkas == null ? 'Ketuk untuk mengunggah' : berkas.uri.pathSegments.last,
-                        style: context.teks.bodyMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        berkas == null
-                            ? 'JPG, PNG, atau PDF — maks. 5MB'
-                            : ValidasiBerkas.formatByte(berkas.lengthSync()),
-                        style: context.teks.bodySmall?.copyWith(color: Warna.teksKedua),
-                      ),
-                    ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => _pilihSumber(context, t),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Jarak.lg,
+                vertical: Jarak.md,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: terisi ? Warna.sukses : Warna.netral100,
+                      borderRadius: BorderRadius.circular(Sudut.sm),
+                    ),
+                    child: Icon(
+                      terisi
+                          ? HugeIcons.strokeRoundedTick02
+                          : HugeIcons.strokeRoundedUpload04,
+                      size: 19,
+                      color: terisi ? Colors.white : Warna.teksKedua,
+                    ),
                   ),
-                ),
-                if (_sibuk)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else if (berkas != null)
-                  IconButton(
-                    icon: const Icon(HugeIcons.strokeRoundedCancel01),
-                    onPressed: () => widget.saatBerubah(null),
+                  const SizedBox(width: Jarak.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          dokumen.wajib ? '$label *' : label,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.teks.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          terisi
+                              ? _namaBerkas(berkas!)
+                              : t.ketukUnggahFormat,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.teks.labelSmall?.copyWith(
+                            color: terisi ? Warna.sukses : Warna.teksKetiga,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-              ],
+                  if (terisi)
+                    IconButton(
+                      onPressed: () => saatUbah(null),
+                      icon: const Icon(
+                        HugeIcons.strokeRoundedDelete02,
+                        size: 18,
+                        color: Warna.bahaya,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
+        if (adaGalat)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Text(
+              galat!,
+              style: context.teks.bodySmall?.copyWith(color: Warna.bahaya),
+            ),
+          ),
       ],
+    );
+  }
+
+  List<String> _ekstensiIzin() {
+    if (dokumen.mimeTypes.isEmpty) return const ['pdf', 'jpg', 'jpeg', 'png'];
+    final ext = <String>{};
+    for (final mime in dokumen.mimeTypes) {
+      switch (mime) {
+        case 'application/pdf':
+          ext.add('pdf');
+        case 'image/jpeg':
+        case 'image/jpg':
+          ext..add('jpg')..add('jpeg');
+        case 'image/png':
+          ext.add('png');
+      }
+    }
+    return ext.isEmpty ? const ['pdf', 'jpg', 'jpeg', 'png'] : ext.toList();
+  }
+
+  String _namaBerkas(File f) {
+    final nama = f.uri.pathSegments.isNotEmpty ? f.uri.pathSegments.last : '';
+    final ukuran = f.existsSync() ? ValidasiBerkas.formatByte(f.lengthSync()) : '';
+    return ukuran.isEmpty ? nama : '$nama · $ukuran';
+  }
+}
+
+enum _SumberBerkas { kamera, galeri, berkas }
+
+class _LembarSumber extends StatelessWidget {
+  const _LembarSumber({required this.teks});
+
+  final Teks teks;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _OpsiSumber(
+            ikon: HugeIcons.strokeRoundedCamera01,
+            label: teks.ambilFotoKamera,
+            saatKetuk: () => Navigator.of(context).pop(_SumberBerkas.kamera),
+          ),
+          _OpsiSumber(
+            ikon: HugeIcons.strokeRoundedImage02,
+            label: teks.pilihDariGaleri,
+            saatKetuk: () => Navigator.of(context).pop(_SumberBerkas.galeri),
+          ),
+          _OpsiSumber(
+            ikon: HugeIcons.strokeRoundedFolder02,
+            label: teks.pilihBerkasPdf,
+            saatKetuk: () => Navigator.of(context).pop(_SumberBerkas.berkas),
+          ),
+          const SizedBox(height: Jarak.sm),
+        ],
+      ),
+    );
+  }
+}
+
+class _OpsiSumber extends StatelessWidget {
+  const _OpsiSumber({
+    required this.ikon,
+    required this.label,
+    required this.saatKetuk,
+  });
+
+  final IconData ikon;
+  final String label;
+  final VoidCallback saatKetuk;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: saatKetuk,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Jarak.layarH,
+          vertical: Jarak.md,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Warna.primerLembut,
+                borderRadius: BorderRadius.circular(Sudut.sm),
+              ),
+              child: Icon(ikon, size: 19, color: Warna.primer),
+            ),
+            const SizedBox(width: Jarak.md),
+            Text(
+              label,
+              style: context.teks.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
