@@ -4,14 +4,10 @@ class UploadLimits {
   static const int fotoDokumenMaxByte = 5 * 1024 * 1024;
   static const int fotoWajahMaxByte = 3 * 1024 * 1024;
   static const int videoLivenessMaxByte = 15 * 1024 * 1024;
-  static const int audioSuaraMaxByte = 5 * 1024 * 1024;
-  static const int dokumenPermohonanMaxByte = 10 * 1024 * 1024;
+  static const int dokumenPermohonanMaxByte = 5 * 1024 * 1024;
 
   static const List<String> fotoMimeTypes = ['image/jpeg', 'image/jpg', 'image/png'];
   static const List<String> videoMimeTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
-  static const List<String> audioMimeTypes = [
-    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/webm', 'audio/ogg'
-  ];
   static const List<String> dokumenMimeTypes = [
     'application/pdf', 'image/jpeg', 'image/png'
   ];
@@ -20,7 +16,6 @@ class UploadLimits {
         'foto_dokumen' => fotoDokumenMaxByte,
         'foto_wajah' => fotoWajahMaxByte,
         'video_liveness' => videoLivenessMaxByte,
-        'audio_suara' => audioSuaraMaxByte,
         'dokumen_permohonan' => dokumenPermohonanMaxByte,
         _ => 5 * 1024 * 1024,
       };
