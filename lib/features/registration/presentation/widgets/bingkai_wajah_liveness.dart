@@ -12,7 +12,6 @@ class BingkaiWajahLiveness extends StatefulWidget {
     required this.anak,
     this.kondisi = KondisiBingkaiWajah.netral,
     this.diameterFraksi = 0.8,
-    this.tampilkanGarisPanduan = true,
     this.offsetWajah = Offset.zero,
     this.wajahTerdeteksi = false,
     this.yawNorm = 0,
@@ -24,7 +23,6 @@ class BingkaiWajahLiveness extends StatefulWidget {
   final Widget anak;
   final KondisiBingkaiWajah kondisi;
   final double diameterFraksi;
-  final bool tampilkanGarisPanduan;
   final Offset offsetWajah;
   final bool wajahTerdeteksi;
   final double yawNorm;
@@ -62,7 +60,7 @@ class _BingkaiWajahLivenessState extends State<BingkaiWajahLiveness>
       case KondisiBingkaiWajah.peringatan:
         return const Color(0xFFF08A6B);
       case KondisiBingkaiWajah.deteksi:
-        return Warna.merahUtama;
+        return Warna.primer;
       case KondisiBingkaiWajah.netral:
         return Colors.white;
     }
@@ -108,7 +106,6 @@ class _BingkaiWajahLivenessState extends State<BingkaiWajahLiveness>
                       warnaAksen: _warnaAksen,
                       yawNorm: widget.yawNorm.clamp(-1.0, 1.0),
                       pitchNorm: widget.pitchNorm.clamp(-1.0, 1.0),
-                      tampilkanGarisPanduan: widget.tampilkanGarisPanduan,
                       wajahTerdeteksi: widget.wajahTerdeteksi,
                       arahAktif: widget.arahAktif,
                       kemajuanAktif:
@@ -200,7 +197,6 @@ class _PengecatTracking extends CustomPainter {
     required this.warnaAksen,
     required this.yawNorm,
     required this.pitchNorm,
-    required this.tampilkanGarisPanduan,
     required this.wajahTerdeteksi,
     required this.arahAktif,
     required this.kemajuanAktif,
@@ -211,7 +207,6 @@ class _PengecatTracking extends CustomPainter {
   final Color warnaAksen;
   final double yawNorm;
   final double pitchNorm;
-  final bool tampilkanGarisPanduan;
   final bool wajahTerdeteksi;
   final ArahTantangan arahAktif;
   final double kemajuanAktif;
@@ -325,23 +320,6 @@ class _PengecatTracking extends CustomPainter {
       final sudutMulai = sudutAktif - math.pi / 2 - sapuan / 2;
       canvas.drawArc(rekt, sudutMulai, sapuan, false, catKemajuan);
     }
-
-    if (tampilkanGarisPanduan) {
-      final catGaris = Paint()
-        ..strokeWidth = 0.8
-        ..color = Colors.white.withValues(alpha: 0.18);
-      final panjangGaris = diameter * 0.6;
-      canvas.drawLine(
-        Offset(pusat.dx - panjangGaris / 2, pusat.dy),
-        Offset(pusat.dx + panjangGaris / 2, pusat.dy),
-        catGaris,
-      );
-      canvas.drawLine(
-        Offset(pusat.dx, pusat.dy - panjangGaris / 2),
-        Offset(pusat.dx, pusat.dy + panjangGaris / 2),
-        catGaris,
-      );
-    }
   }
 
   double? _sudutDariArah(ArahTantangan arah) {
@@ -384,7 +362,6 @@ class _PengecatTracking extends CustomPainter {
       oldDelegate.wajahTerdeteksi != wajahTerdeteksi ||
       oldDelegate.warnaAksen != warnaAksen ||
       oldDelegate.diameter != diameter ||
-      oldDelegate.tampilkanGarisPanduan != tampilkanGarisPanduan ||
       oldDelegate.arahAktif != arahAktif ||
       oldDelegate.kemajuanAktif != kemajuanAktif ||
       oldDelegate.fasePulsa != fasePulsa;
