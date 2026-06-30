@@ -1,14 +1,19 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'dart:async';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
+
+import '../../shared/models/perangkat_aktif.dart';
 import '../config/api_config.dart';
 import '../config/storage_keys.dart';
+import '../enums/peristiwa_audit.dart';
 import '../errors/kesalahan.dart';
+import '../security/layanan_audit_keamanan.dart';
 import '../services/penyimpanan_aman.dart';
 import 'pencegat_amplop.dart';
 import 'pencegat_maintenance.dart';
 import 'pencegat_otentikasi.dart';
+import 'pin_ssl.dart';
 
 typedef SaatTidakBerwenang = Future<void> Function();
 
@@ -45,7 +50,7 @@ class KlienJaringan {
           'Accept-Language': 'id',
           'X-Client': 'bakudapa-mobile',
         },
-        validateStatus: (s) => s != null && s < 500,
+        validateStatus: (s) => s != null && s >= 200 && s < 300,
       ),
     );
 
@@ -55,27 +60,20 @@ class KlienJaringan {
         penyimpanan: PenyimpananAman.instance,
         dioPenyegar: _dioPenyegar,
         saatTidakBerwenang: () async {
+          await bersihkanOtentikasi();
           await _penanganTidakBerwenang?.call();
         },
       ),
       PencegatAmplop(),
       _NormalisasiKesalahan(),
-      if (kDebugMode)
-        PrettyDioLogger(
-          requestHeader: false,
-          requestBody: false,
-          responseBody: false,
-          responseHeader: false,
-          compact: true,
-          maxWidth: 80,
-        ),
     ]);
 
+    PinSsl.pasang(dio);
     return dio;
   }
 
   Dio _bangunPenyegar() {
-    return Dio(
+    final dioPenyegar = Dio(
       BaseOptions(
         baseUrl: ApiConfig.baseUrl,
         connectTimeout: ApiConfig.connectTimeout,
@@ -88,9 +86,11 @@ class KlienJaringan {
           'Accept-Language': 'id',
           'X-Client': 'bakudapa-mobile',
         },
-        validateStatus: (s) => s != null && s < 500,
+        validateStatus: (s) => s != null && s >= 200 && s < 300,
       ),
     );
+    PinSsl.pasang(dioPenyegar);
+    return dioPenyegar;
   }
 
   Future<void> bersihkanOtentikasi() async {
@@ -107,6 +107,20 @@ class _NormalisasiKesalahan extends Interceptor {
       handler.next(err);
       return;
     }
+    if (_pinningGagal(err)) {
+      _catatPinningGagal(err);
+      handler.reject(
+        DioException(
+          requestOptions: err.requestOptions,
+          error: const KesalahanJaringan(
+            'Koneksi tidak aman terdeteksi. Permintaan dihentikan.',
+          ),
+          type: err.type,
+          response: err.response,
+        ),
+      );
+      return;
+    }
     final dipetakan = _petakan(err);
     handler.reject(
       DioException(
@@ -114,6 +128,25 @@ class _NormalisasiKesalahan extends Interceptor {
         error: dipetakan,
         type: err.type,
         response: err.response,
+      ),
+    );
+  }
+
+  bool _pinningGagal(DioException err) {
+    if (err.type == DioExceptionType.badCertificate) return true;
+    final galat = err.error;
+    if (galat is HandshakeException) return true;
+    if (galat is TlsException) return true;
+    return false;
+  }
+
+  void _catatPinningGagal(DioException err) {
+    if (err.requestOptions.extra['anonim'] == true) return;
+    unawaited(
+      LayananAuditKeamanan.instance.catat(
+        peristiwa: PeristiwaAudit.fingerprintGagal,
+        tingkat: TingkatAudit.kritis,
+        metadata: {'host': err.requestOptions.uri.host},
       ),
     );
   }
@@ -156,6 +189,7 @@ class _NormalisasiKesalahan extends Interceptor {
           terblokirSampai: terblokirSampai,
         );
       case KodeKesalahanBackend.conflict:
+      case KodeKesalahanBackend.duplicateRecord:
         return KesalahanKonflik(pesan ?? 'Data sudah terdaftar.');
       case KodeKesalahanBackend.rateLimited:
         final detik = details?['retry_after_seconds'];
@@ -177,15 +211,57 @@ class _NormalisasiKesalahan extends Interceptor {
         );
       case KodeKesalahanBackend.resourceEmpty:
         return KesalahanSumberKosong(pesan ?? 'Sumber data belum tersedia.');
+      case KodeKesalahanBackend.batasPerangkatTercapai:
+        final daftar = details?['perangkat_aktif'] ?? details?['active_devices'];
+        final batas = details?['batas'] ?? details?['limit'];
+        return KesalahanBatasPerangkat(
+          pesan: pesan ?? 'Akun sudah digunakan pada 2 perangkat aktif.',
+          batas: batas is int
+              ? batas
+              : int.tryParse(batas?.toString() ?? ''),
+          perangkatAktif: daftar is List
+              ? daftar
+                    .whereType<Map>()
+                    .map(
+                      (e) =>
+                          PerangkatAktif.dariJson(Map<String, dynamic>.from(e)),
+                    )
+                    .toList()
+              : const [],
+        );
+      case KodeKesalahanBackend.sessionRevoked:
+      case KodeKesalahanBackend.invalidRefreshToken:
+        return KesalahanTidakBerwenang(pesan ?? 'Sesi Anda telah berakhir.');
+      case KodeKesalahanBackend.sesiTidakValid:
+        return KesalahanSesiTidakValid(pesan ?? 'Perangkat yang dipilih tidak valid.');
+      case KodeKesalahanBackend.sesiSudahTidakAktif:
+        return KesalahanSesiSudahTidakAktif(pesan ?? 'Perangkat sudah tidak aktif.');
+      case KodeKesalahanBackend.storageNotConfigured:
+        return KesalahanUnggah(
+          pesan ?? 'Layanan penyimpanan belum siap. Coba lagi nanti.',
+        );
+      case KodeKesalahanBackend.storageError:
+        return KesalahanUnggah(pesan ?? 'Gagal mengunggah berkas. Coba lagi.');
       case KodeKesalahanBackend.validationError:
+      case KodeKesalahanBackend.validationFailed:
+      case KodeKesalahanBackend.badRequest:
         return KesalahanValidasi(
           pesan ?? 'Data tidak valid.',
-          kesalahanRuas: _uraikanRuas(details),
+          kesalahanRuas: amplop.kesalahanRuas,
+        );
+      case KodeKesalahanBackend.payloadTooLarge:
+        return KesalahanValidasi(
+          pesan ?? 'Ukuran berkas terlalu besar. Maksimal 5 MB per berkas.',
         );
       case KodeKesalahanBackend.unauthorized:
         return KesalahanTidakBerwenang(pesan ?? 'Sesi Anda telah berakhir.');
+      case KodeKesalahanBackend.forbidden:
+        return KesalahanDilarang(pesan ?? 'Akses ditolak.');
       case KodeKesalahanBackend.notFound:
         return KesalahanTidakDitemukan(pesan ?? 'Data tidak ditemukan.');
+      case KodeKesalahanBackend.internalServerError:
+      case KodeKesalahanBackend.serviceUnavailable:
+        return KesalahanServer(pesan ?? 'Layanan sedang bermasalah.');
       case KodeKesalahanBackend.maintenanceMode:
         return KesalahanMaintenance(
           pesan: pesan ?? 'Layanan sedang dalam pemeliharaan.',
@@ -196,7 +272,7 @@ class _NormalisasiKesalahan extends Interceptor {
       case 400:
         return KesalahanValidasi(
           pesan ?? 'Permintaan tidak valid.',
-          kesalahanRuas: _uraikanRuas(details),
+          kesalahanRuas: amplop.kesalahanRuas,
         );
       case 401:
         return KesalahanTidakBerwenang(pesan ?? 'Sesi Anda telah berakhir.');
@@ -206,10 +282,14 @@ class _NormalisasiKesalahan extends Interceptor {
         return KesalahanTidakDitemukan(pesan ?? 'Data tidak ditemukan.');
       case 409:
         return KesalahanKonflik(pesan ?? 'Data sudah terdaftar.');
+      case 413:
+        return KesalahanValidasi(
+          pesan ?? 'Ukuran berkas terlalu besar. Maksimal 5 MB per berkas.',
+        );
       case 422:
         return KesalahanValidasi(
           pesan ?? 'Data tidak lolos validasi.',
-          kesalahanRuas: _uraikanRuas(details),
+          kesalahanRuas: amplop.kesalahanRuas,
         );
       case 429:
         return const KesalahanBatasFrekuensi();
@@ -230,6 +310,16 @@ class _NormalisasiKesalahan extends Interceptor {
         details: detailsMap is Map
             ? Map<String, dynamic>.from(detailsMap)
             : null,
+        kesalahanRuas: detailsMap is Map
+            ? _uraikanRuas(detailsMap['errors'] ?? detailsMap['fields'] ?? detailsMap)
+            : null,
+      );
+    }
+    if (data['error_code'] is String || data['errors'] != null) {
+      return _AmplopGalat(
+        kode: data['error_code'] is String ? data['error_code'] as String : null,
+        pesan: _pesanDari(data),
+        kesalahanRuas: _uraikanRuas(data['errors']),
       );
     }
     return _AmplopGalat(
@@ -237,9 +327,35 @@ class _NormalisasiKesalahan extends Interceptor {
     );
   }
 
-  Map<String, String>? _uraikanRuas(dynamic data) {
-    if (data is! Map) return null;
-    final ruas = data['errors'] ?? data['fields'] ?? data;
+  String? _pesanDari(Map<dynamic, dynamic> data) {
+    final pesan = data['message'];
+    if (pesan is String && pesan.isNotEmpty) return pesan;
+    final errors = data['errors'];
+    if (errors is List && errors.isNotEmpty) return errors.first.toString();
+    if (errors is Map && errors.isNotEmpty) {
+      final pertama = errors.values.first;
+      if (pertama is List && pertama.isNotEmpty) return pertama.first.toString();
+      if (pertama is String) return pertama;
+    }
+    return null;
+  }
+
+  Map<String, String>? _uraikanRuas(dynamic ruas) {
+    if (ruas is List) {
+      if (ruas.isEmpty) return null;
+      final perRuas = <String, String>{};
+      for (final item in ruas) {
+        if (item is Map) {
+          final field = (item['field'] ?? item['key'] ?? item['kunci'])?.toString();
+          final pesan =
+              (item['message'] ?? item['pesan'] ?? item['error'])?.toString();
+          if (field != null && field.isNotEmpty && pesan != null && pesan.isNotEmpty) {
+            perRuas[field] = pesan;
+          }
+        }
+      }
+      return perRuas.isNotEmpty ? perRuas : {'form': ruas.first.toString()};
+    }
     if (ruas is! Map) return null;
     final keluar = <String, String>{};
     ruas.forEach((k, v) {
@@ -259,10 +375,12 @@ class _AmplopGalat {
     this.judul,
     this.pesan,
     this.details,
+    this.kesalahanRuas,
   });
 
   final String? kode;
   final String? judul;
   final String? pesan;
   final Map<String, dynamic>? details;
+  final Map<String, String>? kesalahanRuas;
 }
