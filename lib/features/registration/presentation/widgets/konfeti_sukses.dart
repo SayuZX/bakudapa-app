@@ -23,8 +23,8 @@ class KonfetiSukses extends StatefulWidget {
 class _KonfetiSuksesState extends State<KonfetiSukses>
     with SingleTickerProviderStateMixin {
   static const _palet = [
-    Color(0xFFC8102E),
-    Color(0xFFEA8528),
+    Color(0xFF132B50),
+    Color(0xFF3A5C96),
     Color(0xFFF6C90E),
     Color(0xFF2EB67D),
     Color(0xFF1F6FB8),
