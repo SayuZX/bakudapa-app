@@ -1,21 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
+import '../../../core/dialogs/dialog_aplikasi.dart';
 import '../../../core/errors/kesalahan.dart';
 import '../../../core/extensions/konteks.dart';
 import '../../../core/localization/teks.dart';
 import '../../../core/router/nama_rute.dart';
+import '../../../core/theme/dimensi.dart';
 import '../../../core/theme/warna.dart';
 import '../../../core/utils/penyamaran.dart';
 import '../../../shared/providers/penyedia_muat_global.dart';
 import '../../../shared/providers/penyedia_otentikasi.dart';
 import '../../../shared/providers/penyedia_repositori.dart';
 import '../data/model_otp.dart';
+import 'widgets/bingkai_otentikasi.dart';
 
 class HalamanOtp extends ConsumerStatefulWidget {
   const HalamanOtp({
@@ -64,8 +66,6 @@ class _HalamanOtpState extends ConsumerState<HalamanOtp> {
   }
 
   Future<void> _kirim() async {
-    // Guard anti double-submit: PinCodeTextField.onCompleted bisa terpicu
-    // berulang (paste / autofill / ketik cepat). Tolak kalau sedang proses.
     if (_memuat) return;
     final t = ref.read(teksProvider);
     if (_pengaturKode.text.length != 6) return;
@@ -83,11 +83,16 @@ class _HalamanOtpState extends ConsumerState<HalamanOtp> {
       if (!mounted) return;
       switch (hasil) {
         case HasilVerifikasiOtpLogin():
-          ref
-              .read(penyediaOtentikasi.notifier)
-              .tandaiSudahMasukDariOtp(hasil.pengguna);
+          ref.read(penyediaOtentikasi.notifier).tandaiSudahMasukDariOtp(
+                hasil.pengguna,
+                wajibAturKredensial: hasil.wajibGantiKataSandi,
+              );
           context.tampilkanPesan(t.verifikasiBerhasil);
-          context.go(NamaRute.beranda);
+          context.go(
+            hasil.wajibGantiKataSandi
+                ? NamaRute.buatKredensial
+                : NamaRute.beranda,
+          );
         case HasilVerifikasiOtpReset():
           context.go(
             NamaRute.resetKataSandiBaru,
@@ -103,6 +108,16 @@ class _HalamanOtpState extends ConsumerState<HalamanOtp> {
     } finally {
       if (mounted) setState(() => _memuat = false);
     }
+  }
+
+  Future<void> _fiturTidakTersedia() async {
+    final t = ref.read(teksProvider);
+    await DialogAplikasi.tampilkanAlert<void>(
+      context: context,
+      judul: t.fiturTidakTersediaJudul,
+      pesan: t.fiturTidakTersediaSementara,
+      nada: NadaDialog.info,
+    );
   }
 
   Future<void> _kirimUlang() async {
@@ -134,147 +149,55 @@ class _HalamanOtpState extends ConsumerState<HalamanOtp> {
             ? Penyamaran.noHp(widget.identitas)
             : Penyamaran.nik(widget.identitas);
 
-    const tinggiHero = 240.0;
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: Warna.permukaan,
-        resizeToAvoidBottomInset: true,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFC8102E), Color(0xFFEA8528)],
-                ),
+    return BingkaiOtentikasi(
+      tampilkanKembali: true,
+      tinggiHero: 240,
+      judul: t.masukkanKodeUnik,
+      subJudul: t.silakanPeriksaSmsKe(identitasSamar),
+      anak: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _KotakOtp(
+            pengatur: _pengaturKode,
+            saatLengkap: (_) => _kirim(),
+          ),
+          const SizedBox(height: Jarak.xl),
+          _BarisKirimUlang(
+            detik: _detik,
+            saatTekan: _kirimUlang,
+          ),
+          const SizedBox(height: Jarak.xl),
+          _TombolGarisMerah(
+            label: t.kirimKodeLewatEmail,
+            ikon: Icons.mail_outline,
+            onTap: _kirimUlang,
+          ),
+          const SizedBox(height: Jarak.md),
+          _TombolGarisMerah(
+            label: t.kirimKodeLewatTelepon,
+            ikon: Icons.call_outlined,
+            onTap: _fiturTidakTersedia,
+            gelap: true,
+          ),
+          const SizedBox(height: Jarak.xxl),
+          Text(
+            t.butuhBantuan,
+            textAlign: TextAlign.center,
+            style: context.teks.bodyMedium?.copyWith(color: Warna.teksKedua),
+          ),
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: () => context.push(NamaRute.bantuan),
+            child: Text(
+              t.hubungiDisdukcapil,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Warna.info,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: Material(
-                      color: Colors.white,
-                      shape: const CircleBorder(),
-                      elevation: 2,
-                      shadowColor: Colors.black.withValues(alpha: 0.15),
-                      child: InkWell(
-                        onTap: () => context.canPop()
-                            ? context.pop()
-                            : context.go(NamaRute.masuk),
-                        customBorder: const CircleBorder(),
-                        child: const SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: Icon(Icons.arrow_back,
-                              color: Warna.teksUtama, size: 22),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned.fill(
-              top: tinggiHero - 36,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Warna.permukaan,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(32),
-                    topRight: Radius.circular(32),
-                  ),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(
-                    28,
-                    40,
-                    28,
-                    28 + MediaQuery.viewInsetsOf(context).bottom,
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        t.masukkanKodeUnik,
-                        textAlign: TextAlign.center,
-                        style: context.teks.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        t.silakanPeriksaSmsKe(identitasSamar),
-                        textAlign: TextAlign.center,
-                        style: context.teks.bodyMedium?.copyWith(
-                          color: Warna.teksKedua,
-                          height: 1.55,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      _KotakOtp(
-                        pengatur: _pengaturKode,
-                        saatLengkap: (_) => _kirim(),
-                      ),
-                      const SizedBox(height: 24),
-                      _BarisKirimUlang(
-                        detik: _detik,
-                        saatTekan: _kirimUlang,
-                      ),
-                      const SizedBox(height: 32),
-                      _TombolGarisMerah(
-                        label: t.kirimKodeLewatEmail,
-                        ikon: Icons.mail_outline,
-                        onTap: _kirimUlang,
-                      ),
-                      const SizedBox(height: 12),
-                      _TombolGarisMerah(
-                        label: t.kirimKodeLewatTelepon,
-                        ikon: Icons.call_outlined,
-                        onTap: _kirimUlang,
-                      ),
-                      const SizedBox(height: 28),
-                      Text(
-                        t.butuhBantuan,
-                        style: context.teks.bodyMedium?.copyWith(
-                          color: Warna.teksKedua,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      GestureDetector(
-                        onTap: () => context.push(NamaRute.bantuan),
-                        child: Text(
-                          t.hubungiDisdukcapil,
-                          style: const TextStyle(
-                            color: Warna.info,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -301,12 +224,13 @@ class _KotakOtp extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         fieldHeight: 56,
         fieldWidth: 44,
-        activeColor: Warna.merahUtama,
-        selectedColor: Warna.merahUtama,
-        inactiveColor: Colors.transparent,
-        activeFillColor: Warna.permukaan,
-        selectedFillColor: Warna.permukaan,
-        inactiveFillColor: Warna.permukaan,
+        activeColor: Warna.primer,
+        selectedColor: Warna.primer,
+        inactiveColor: Warna.garisTegas,
+        disabledColor: Warna.garisTegas,
+        activeFillColor: Warna.netral50,
+        selectedFillColor: Warna.putih,
+        inactiveFillColor: Warna.netral50,
         borderWidth: 1.4,
       ),
       textStyle: const TextStyle(
@@ -353,6 +277,7 @@ class _BarisKirimUlang extends ConsumerWidget {
             ),
           ],
         ),
+        textAlign: TextAlign.center,
       );
     }
     return Text.rich(
@@ -367,7 +292,7 @@ class _BarisKirimUlang extends ConsumerWidget {
               child: Text(
                 t.kirimUlang,
                 style: const TextStyle(
-                  color: Warna.merahUtama,
+                  color: Warna.primer,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -375,6 +300,7 @@ class _BarisKirimUlang extends ConsumerWidget {
           ),
         ],
       ),
+      textAlign: TextAlign.center,
     );
   }
 }
@@ -384,22 +310,45 @@ class _TombolGarisMerah extends StatelessWidget {
     required this.label,
     required this.ikon,
     required this.onTap,
+    this.gelap = false,
   });
   final String label;
   final IconData ikon;
   final VoidCallback onTap;
+  final bool gelap;
 
   @override
   Widget build(BuildContext context) {
+    if (gelap) {
+      return SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: FilledButton.icon(
+          onPressed: onTap,
+          style: FilledButton.styleFrom(
+            backgroundColor: Warna.netral200,
+            foregroundColor: Warna.teksNonaktif,
+            elevation: 0,
+            shape: const StadiumBorder(),
+            textStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          icon: Icon(ikon, size: 20),
+          label: Text(label),
+        ),
+      );
+    }
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: OutlinedButton.icon(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Warna.merahUtama, width: 1.4),
+          side: const BorderSide(color: Warna.primer, width: 1.4),
           shape: const StadiumBorder(),
-          foregroundColor: Warna.merahUtama,
+          foregroundColor: Warna.primer,
           textStyle: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
