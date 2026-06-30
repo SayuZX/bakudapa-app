@@ -1,128 +1,133 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/config/endpoints.dart';
 import '../../../core/errors/kesalahan.dart';
 import '../../../core/network/klien_jaringan.dart';
+import '../../../shared/models/halaman_data.dart';
 import '../../../shared/models/pemberitahuan.dart';
 
-class StatistikPemberitahuan {
-  const StatistikPemberitahuan({
-    required this.total,
-    required this.belumDibaca,
-    required this.perKategori,
+abstract class RepositoriPemberitahuan {
+  Future<HalamanData<Pemberitahuan>> daftar({
+    int halaman = 1,
+    int ukuran = 20,
+    bool? dibaca,
+    String? kategori,
   });
 
-  final int total;
-  final int belumDibaca;
-  final Map<String, int> perKategori;
-
-  factory StatistikPemberitahuan.kosong() =>
-      const StatistikPemberitahuan(total: 0, belumDibaca: 0, perKategori: {});
-
-  factory StatistikPemberitahuan.dariJson(Map<String, dynamic> json) {
-    final perK = <String, int>{};
-    final raw = json['per_kategori'] ?? json['per_category'];
-    if (raw is Map) {
-      raw.forEach((k, v) {
-        if (v is int) perK[k.toString()] = v;
-      });
-    }
-    return StatistikPemberitahuan(
-      total: (json['total'] as int?) ?? 0,
-      belumDibaca:
-          (json['belum_dibaca'] as int?) ?? (json['unread'] as int?) ?? 0,
-      perKategori: perK,
-    );
-  }
-}
-
-abstract class RepositoriPemberitahuan {
-  Future<List<Pemberitahuan>> daftar({int halaman = 1, int ukuran = 20, String? kategori});
   Future<int> jumlahBelumDibaca();
-  Future<StatistikPemberitahuan> statistik();
-  Future<Pemberitahuan?> detail(String id);
+
   Future<void> tandaiDibaca(String id);
+
   Future<void> tandaiSemuaDibaca();
 }
 
 class RepositoriPemberitahuanApi implements RepositoriPemberitahuan {
-  RepositoriPemberitahuanApi({Dio? dio}) : _dio = dio ?? KlienJaringan.instance.dio;
+  RepositoriPemberitahuanApi({Dio? dio})
+    : _dio = dio ?? KlienJaringan.instance.dio;
   final Dio _dio;
 
   @override
-  Future<List<Pemberitahuan>> daftar({int halaman = 1, int ukuran = 20, String? kategori}) async {
+  Future<HalamanData<Pemberitahuan>> daftar({
+    int halaman = 1,
+    int ukuran = 20,
+    bool? dibaca,
+    String? kategori,
+  }) async {
     try {
-      final params = <String, dynamic>{
-        'page': halaman,
-        'page_size': ukuran,
-        if (kategori != null && kategori.isNotEmpty) 'category': kategori,
-      };
-      final res = await _dio.get('/notifications', queryParameters: params);
-      final body = res.data as Map<String, dynamic>;
-      return (body['data'] as List<dynamic>? ?? const [])
-          .map((e) => Pemberitahuan.dariJson(e as Map<String, dynamic>))
-          .toList();
+      final res = await _dio.get(
+        Endpoints.pemberitahuan,
+        queryParameters: {
+          'halaman': halaman,
+          'per_halaman': ukuran,
+          'dibaca': ?dibaca,
+          'kategori': ?kategori,
+        },
+      );
+      final daftar = _daftarMap(res.data).map(Pemberitahuan.dariJson).toList();
+      final meta = _bacaMeta(res);
+      return HalamanData(
+        daftar: daftar,
+        halaman: _angka(meta['halaman'] ?? meta['current_page']) ?? halaman,
+        totalHalaman: _angka(meta['total_halaman'] ?? meta['total_pages']) ?? 1,
+        totalItem:
+            _angka(meta['total'] ?? meta['total_count']) ?? daftar.length,
+      );
     } on DioException catch (e) {
-      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
-    } catch (_) {
-      throw const KesalahanTakDikenal();
+      throw e.error is Kesalahan
+          ? e.error! as Kesalahan
+          : const KesalahanTakDikenal();
     }
   }
 
   @override
   Future<int> jumlahBelumDibaca() async {
     try {
-      final res = await _dio.get('/notifications/unread-count');
-      final data = _bacaData(res.data) ?? const {};
-      return (data['unread_count'] as int?) ??
-          (data['jumlah'] as int?) ??
-          0;
-    } catch (_) {
+      final res = await _dio.get(Endpoints.pemberitahuanJumlahBelumDibaca);
+      final data = res.data;
+      if (data is Map) {
+        return _angka(
+              data['jumlah'] ?? data['count'] ?? data['unread_count'],
+            ) ??
+            0;
+      }
       return 0;
-    }
-  }
-
-  @override
-  Future<StatistikPemberitahuan> statistik() async {
-    try {
-      final res = await _dio.get('/notifications/stats');
-      final data = _bacaData(res.data) ?? const {};
-      return StatistikPemberitahuan.dariJson(data);
-    } catch (_) {
-      return StatistikPemberitahuan.kosong();
-    }
-  }
-
-  @override
-  Future<Pemberitahuan?> detail(String id) async {
-    try {
-      final res = await _dio.get('/notifications/$id');
-      final data = _bacaData(res.data);
-      if (data == null) return null;
-      return Pemberitahuan.dariJson(data);
-    } catch (_) {
-      return null;
+    } on DioException catch (e) {
+      throw e.error is Kesalahan
+          ? e.error! as Kesalahan
+          : const KesalahanTakDikenal();
     }
   }
 
   @override
   Future<void> tandaiDibaca(String id) async {
     try {
-      await _dio.put('/notifications/$id/mark-as-read');
-    } catch (_) {}
+      await _dio.post(Endpoints.pemberitahuanTandaiDibaca(id));
+    } on DioException catch (e) {
+      throw e.error is Kesalahan
+          ? e.error! as Kesalahan
+          : const KesalahanTakDikenal();
+    }
   }
 
   @override
   Future<void> tandaiSemuaDibaca() async {
     try {
-      await _dio.put('/notifications/mark-all-as-read');
-    } catch (_) {}
+      await _dio.post(Endpoints.pemberitahuanTandaiSemua);
+    } on DioException catch (e) {
+      throw e.error is Kesalahan
+          ? e.error! as Kesalahan
+          : const KesalahanTakDikenal();
+    }
   }
+}
 
-  Map<String, dynamic>? _bacaData(dynamic body) {
-    if (body is! Map) return null;
-    final map = Map<String, dynamic>.from(body);
-    final inner = map['data'];
-    if (inner is Map) return Map<String, dynamic>.from(inner);
-    return map;
+int? _angka(dynamic nilai) {
+  if (nilai is int) return nilai;
+  if (nilai is num) return nilai.toInt();
+  return int.tryParse('$nilai');
+}
+
+List<Map<String, dynamic>> _daftarMap(dynamic body) {
+  dynamic isi = body;
+  if (isi is Map) {
+    isi =
+        isi['pemberitahuan'] ??
+        isi['data'] ??
+        isi['items'] ??
+        isi['list'] ??
+        isi.values.firstWhere((v) => v is List, orElse: () => null);
   }
+  if (isi is List) {
+    return isi
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  }
+  return const [];
+}
+
+Map<String, dynamic> _bacaMeta(Response res) {
+  final ekstra = res.extra['meta'];
+  if (ekstra is Map) return Map<String, dynamic>.from(ekstra);
+  return const {};
 }
