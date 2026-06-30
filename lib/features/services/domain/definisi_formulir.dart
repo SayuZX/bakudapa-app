@@ -1,236 +1,99 @@
-import '../../../shared/models/jenis_layanan.dart';
+enum TipeRuas {
+  teks,
+  angka,
+  tanggal,
+  jam,
+  pilihan,
+  multiPilihan,
+  daftarNik,
+  perubahanBiodata,
+  areaTeks,
+  email,
+}
 
-enum TipeRuas { teks, angka, nik, noKk, email, telepon, tanggal, areaTeks, pilihan }
+class PilihanRuas {
+  const PilihanRuas(this.nilai, this.label);
+  final String nilai;
+  final String label;
+}
+
+class KondisiTampil {
+  const KondisiTampil({required this.kunciRuas, required this.salahSatuDari});
+  final String kunciRuas;
+  final List<String> salahSatuDari;
+
+  bool terpenuhi(Map<String, String> nilai) {
+    final v = nilai[kunciRuas] ?? '';
+    if (salahSatuDari.contains(v)) return true;
+    return v
+        .split(';')
+        .where((e) => e.isNotEmpty)
+        .any(salahSatuDari.contains);
+  }
+}
 
 class DefinisiRuas {
   const DefinisiRuas({
-    required this.nama,
+    required this.kunci,
     required this.label,
     required this.tipe,
-    this.wajib = true,
-    this.petunjuk,
-    this.pilihan = const [],
+    this.wajib = false,
+    this.panjangMin,
     this.panjangMaks,
+    this.placeholder,
+    this.min,
+    this.maks,
+    this.desimal = false,
+    this.hanyaAngka = false,
+    this.pilihan = const <PilihanRuas>[],
+    this.kondisi,
   });
 
-  final String nama;
+  final String kunci;
   final String label;
   final TipeRuas tipe;
   final bool wajib;
-  final String? petunjuk;
-  final List<String> pilihan;
+  final int? panjangMin;
   final int? panjangMaks;
+  final String? placeholder;
+  final double? min;
+  final double? maks;
+  final bool desimal;
+  final bool hanyaAngka;
+  final List<PilihanRuas> pilihan;
+  final KondisiTampil? kondisi;
+
+  String get _kunciKecil => kunci.toLowerCase();
+
+  bool get adalahNik => _kunciKecil.contains('nik');
+
+  bool get adalahNoKk =>
+      _kunciKecil.contains('kk') || _kunciKecil.contains('kartu_keluarga');
+
+  bool get nomorIdentitas16 =>
+      panjangMaks == 16 && (panjangMin == 16 || adalahNik || adalahNoKk);
 }
 
-class DefinisiBerkas {
-  const DefinisiBerkas({required this.nama, required this.label, this.wajib = true});
-  final String nama;
+class DefinisiDokumen {
+  const DefinisiDokumen({
+    required this.kunci,
+    required this.label,
+    this.wajib = false,
+    this.kondisi,
+    this.mimeTypes = const <String>[],
+    this.maksByte,
+  });
+
+  final String kunci;
   final String label;
   final bool wajib;
+  final KondisiTampil? kondisi;
+  final List<String> mimeTypes;
+  final int? maksByte;
 }
 
-class DefinisiFormulir {
-  const DefinisiFormulir({
-    required this.ruas,
-    required this.berkas,
-    required this.langkahPanduan,
-  });
-  final List<DefinisiRuas> ruas;
-  final List<DefinisiBerkas> berkas;
-  final List<String> langkahPanduan;
-}
-
-class KatalogFormulir {
-  const KatalogFormulir._();
-
-  static DefinisiFormulir untuk(JenisLayanan jenis) {
-    switch (jenis) {
-      case JenisLayanan.ktpIkd:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'sub_jenis', label: 'Jenis Permohonan', tipe: TipeRuas.pilihan,
-                pilihan: ['Cetak Baru', 'Penggantian', 'Aktivasi IKD']),
-            DefinisiRuas(nama: 'alasan', label: 'Alasan', tipe: TipeRuas.areaTeks, panjangMaks: 250),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'foto_kk', label: 'Foto Kartu Keluarga'),
-            DefinisiBerkas(nama: 'foto_diri', label: 'Foto Diri (selfie)'),
-          ],
-          langkahPanduan: [
-            'Siapkan foto KK yang masih berlaku.',
-            'Ambil foto diri (selfie) dengan pencahayaan yang baik.',
-            'Pilih jenis permohonan dan isi alasan singkat.',
-            'Kirim formulir, status akan muncul di menu Riwayat.',
-          ],
-        );
-      case JenisLayanan.kartuKeluarga:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'sub_jenis', label: 'Jenis Permohonan', tipe: TipeRuas.pilihan,
-                pilihan: ['KK Baru', 'Perubahan Data', 'Pecah KK']),
-            DefinisiRuas(nama: 'no_kk_lama', label: 'Nomor KK Lama', tipe: TipeRuas.noKk, wajib: false),
-            DefinisiRuas(nama: 'keterangan', label: 'Keterangan', tipe: TipeRuas.areaTeks, panjangMaks: 250),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'foto_kk_lama', label: 'Foto KK Lama', wajib: false),
-            DefinisiBerkas(nama: 'foto_ktp_kepala', label: 'KTP Kepala Keluarga'),
-            DefinisiBerkas(nama: 'foto_pendukung', label: 'Dokumen Pendukung'),
-          ],
-          langkahPanduan: [
-            'Tentukan jenis permohonan KK.',
-            'Isi nomor KK lama bila ada.',
-            'Unggah foto KK lama, KTP kepala keluarga, dan dokumen pendukung.',
-            'Kirim permohonan.',
-          ],
-        );
-      case JenisLayanan.kia:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'nik_anak', label: 'NIK Anak', tipe: TipeRuas.nik),
-            DefinisiRuas(nama: 'nama_anak', label: 'Nama Anak', tipe: TipeRuas.teks),
-            DefinisiRuas(nama: 'tgl_lahir', label: 'Tanggal Lahir', tipe: TipeRuas.tanggal),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'akta_lahir', label: 'Akta Kelahiran'),
-            DefinisiBerkas(nama: 'foto_anak', label: 'Foto Anak', wajib: false),
-          ],
-          langkahPanduan: [
-            'Pastikan anak sudah memiliki NIK.',
-            'Unggah akta kelahiran.',
-            'Foto anak opsional untuk kelengkapan.',
-            'Kirim formulir.',
-          ],
-        );
-      case JenisLayanan.aktaKelahiran:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'nama_anak', label: 'Nama Anak', tipe: TipeRuas.teks),
-            DefinisiRuas(nama: 'tempat_lahir', label: 'Tempat Lahir', tipe: TipeRuas.teks),
-            DefinisiRuas(nama: 'tgl_lahir', label: 'Tanggal Lahir', tipe: TipeRuas.tanggal),
-            DefinisiRuas(nama: 'nik_ayah', label: 'NIK Ayah', tipe: TipeRuas.nik),
-            DefinisiRuas(nama: 'nik_ibu', label: 'NIK Ibu', tipe: TipeRuas.nik),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'surat_lahir', label: 'Surat Keterangan Lahir'),
-            DefinisiBerkas(nama: 'foto_kk', label: 'Foto Kartu Keluarga'),
-            DefinisiBerkas(nama: 'foto_buku_nikah', label: 'Buku Nikah Orang Tua'),
-          ],
-          langkahPanduan: [
-            'Siapkan surat keterangan lahir dari faskes.',
-            'Pastikan NIK ayah dan ibu sudah terdaftar.',
-            'Unggah dokumen pendukung.',
-            'Kirim permohonan.',
-          ],
-        );
-      case JenisLayanan.aktaKematian:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'nik_almarhum', label: 'NIK Almarhum', tipe: TipeRuas.nik),
-            DefinisiRuas(nama: 'tgl_meninggal', label: 'Tanggal Meninggal', tipe: TipeRuas.tanggal),
-            DefinisiRuas(nama: 'tempat_meninggal', label: 'Tempat Meninggal', tipe: TipeRuas.teks),
-            DefinisiRuas(nama: 'penyebab', label: 'Penyebab', tipe: TipeRuas.teks),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'surat_kematian', label: 'Surat Keterangan Kematian'),
-            DefinisiBerkas(nama: 'foto_kk', label: 'Foto Kartu Keluarga'),
-          ],
-          langkahPanduan: [
-            'Dapatkan surat keterangan kematian.',
-            'Siapkan KK terbaru.',
-            'Isi data almarhum dengan teliti.',
-            'Kirim permohonan.',
-          ],
-        );
-      case JenisLayanan.perkawinanPerceraian:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'sub_jenis', label: 'Jenis Pencatatan', tipe: TipeRuas.pilihan,
-                pilihan: ['Perkawinan', 'Perceraian']),
-            DefinisiRuas(nama: 'nik_pihak_1', label: 'NIK Pihak Pertama', tipe: TipeRuas.nik),
-            DefinisiRuas(nama: 'nik_pihak_2', label: 'NIK Pihak Kedua', tipe: TipeRuas.nik),
-            DefinisiRuas(nama: 'tanggal_peristiwa', label: 'Tanggal Peristiwa', tipe: TipeRuas.tanggal),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'akta_gereja', label: 'Akta Perkawinan/Perceraian Gereja'),
-            DefinisiBerkas(nama: 'foto_pasangan', label: 'Foto Pasangan'),
-          ],
-          langkahPanduan: [
-            'Layanan ini untuk pencatatan non-muslim.',
-            'Lengkapi dokumen akta dari lembaga keagamaan.',
-            'Isi data kedua pihak dengan benar.',
-            'Kirim permohonan.',
-          ],
-        );
-      case JenisLayanan.pindahDatang:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'tujuan', label: 'Alamat Tujuan', tipe: TipeRuas.areaTeks),
-            DefinisiRuas(nama: 'alasan', label: 'Alasan Pindah', tipe: TipeRuas.teks),
-            DefinisiRuas(nama: 'jumlah_anggota', label: 'Jumlah Anggota Pindah', tipe: TipeRuas.angka),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'foto_kk', label: 'Foto Kartu Keluarga'),
-            DefinisiBerkas(nama: 'foto_ktp', label: 'Foto KTP-el'),
-          ],
-          langkahPanduan: [
-            'Pastikan alamat tujuan lengkap dengan RT/RW.',
-            'Sertakan KK dan KTP pemohon.',
-            'Cantumkan jumlah anggota keluarga yang ikut pindah.',
-            'Kirim permohonan SKPWNI.',
-          ],
-        );
-      case JenisLayanan.konsolidasiData:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'jenis_perubahan', label: 'Jenis Perubahan', tipe: TipeRuas.pilihan,
-                pilihan: ['Alamat', 'Status Perkawinan', 'Pendidikan', 'Pekerjaan']),
-            DefinisiRuas(nama: 'detail', label: 'Detail Perubahan', tipe: TipeRuas.areaTeks),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'foto_pendukung', label: 'Dokumen Pendukung'),
-          ],
-          langkahPanduan: [
-            'Pilih jenis data yang ingin diperbarui.',
-            'Jelaskan secara singkat perubahan yang diinginkan.',
-            'Unggah dokumen pendukung perubahan.',
-            'Kirim permohonan.',
-          ],
-        );
-      case JenisLayanan.legalisir:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'jenis_dokumen', label: 'Jenis Dokumen', tipe: TipeRuas.pilihan,
-                pilihan: ['Akta Kelahiran', 'Akta Kematian', 'Akta Perkawinan', 'Akta Perceraian']),
-            DefinisiRuas(nama: 'jumlah_salinan', label: 'Jumlah Salinan', tipe: TipeRuas.angka),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'foto_dokumen', label: 'Salinan Dokumen'),
-          ],
-          langkahPanduan: [
-            'Pilih jenis akta yang akan dilegalisir.',
-            'Tentukan jumlah salinan.',
-            'Unggah foto salinan dokumen yang jelas.',
-            'Kirim permohonan.',
-          ],
-        );
-      case JenisLayanan.pengaduan:
-        return const DefinisiFormulir(
-          ruas: [
-            DefinisiRuas(nama: 'judul', label: 'Judul Pengaduan', tipe: TipeRuas.teks),
-            DefinisiRuas(nama: 'kategori', label: 'Kategori', tipe: TipeRuas.pilihan,
-                pilihan: ['Layanan Petugas', 'Sistem/Aplikasi', 'Lainnya']),
-            DefinisiRuas(nama: 'isi', label: 'Uraian Pengaduan', tipe: TipeRuas.areaTeks, panjangMaks: 500),
-          ],
-          berkas: [
-            DefinisiBerkas(nama: 'lampiran', label: 'Lampiran (opsional)', wajib: false),
-          ],
-          langkahPanduan: [
-            'Tuliskan judul pengaduan yang singkat dan jelas.',
-            'Pilih kategori yang sesuai.',
-            'Uraikan kronologi dengan rinci.',
-            'Lampirkan bukti bila ada, lalu kirim.',
-          ],
-        );
-    }
-  }
+class FormulirPdf {
+  const FormulirPdf({required this.nama, required this.namaBerkas});
+  final String nama;
+  final String namaBerkas;
 }
