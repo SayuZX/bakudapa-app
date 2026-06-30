@@ -44,7 +44,7 @@ class StepperRegistrasi extends ConsumerWidget {
                 Text(
                   judulLangkah!,
                   style: context.teks.labelMedium?.copyWith(
-                    color: Warna.merahUtama,
+                    color: Warna.primer,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -61,7 +61,7 @@ class StepperRegistrasi extends ConsumerWidget {
                 value: v,
                 minHeight: 4,
                 backgroundColor: Warna.netral100,
-                valueColor: const AlwaysStoppedAnimation<Color>(Warna.merahUtama),
+                valueColor: const AlwaysStoppedAnimation<Color>(Warna.primer),
               ),
             ),
           ),
