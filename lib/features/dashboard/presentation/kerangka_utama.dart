@@ -8,23 +8,56 @@ import '../../../core/localization/teks.dart';
 import '../../../core/theme/warna.dart';
 import '../../../shared/providers/penyedia_pemberitahuan.dart';
 
-class KerangkaUtama extends ConsumerWidget {
+class KerangkaUtama extends ConsumerStatefulWidget {
   const KerangkaUtama({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
-  void _pilih(int indeks) {
-    navigationShell.goBranch(
-      indeks,
-      initialLocation: indeks == navigationShell.currentIndex,
-    );
+  @override
+  ConsumerState<KerangkaUtama> createState() => _KerangkaUtamaState();
+}
+
+class _KerangkaUtamaState extends ConsumerState<KerangkaUtama>
+    with WidgetsBindingObserver {
+  static const int _indeksNotifikasi = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    ref.read(penyediaJumlahBelumDibaca.notifier).segarkan();
+    if (widget.navigationShell.currentIndex == _indeksNotifikasi) {
+      ref.read(penyediaPemberitahuan.notifier).segarkan();
+    }
+  }
+
+  void _pilih(int indeks) {
+    widget.navigationShell.goBranch(
+      indeks,
+      initialLocation: indeks == widget.navigationShell.currentIndex,
+    );
+    if (indeks == _indeksNotifikasi) {
+      ref.read(penyediaJumlahBelumDibaca.notifier).segarkan();
+      ref.read(penyediaPemberitahuan.notifier).segarkan();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final t = ref.watch(teksProvider);
     final belumDibaca = ref.watch(penyediaJumlahBelumDibaca);
-    final diBeranda = navigationShell.currentIndex == 0;
+    final diBeranda = widget.navigationShell.currentIndex == 0;
 
     final tab = <_Tab>[
       _Tab(
@@ -66,13 +99,13 @@ class KerangkaUtama extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        body: navigationShell,
+        body: widget.navigationShell,
         bottomNavigationBar: DecoratedBox(
           decoration: const BoxDecoration(
             border: Border(top: BorderSide(color: Warna.garis, width: 0.6)),
           ),
           child: NavigationBar(
-            selectedIndex: navigationShell.currentIndex,
+            selectedIndex: widget.navigationShell.currentIndex,
             onDestinationSelected: _pilih,
             destinations: [
               for (final d in tab)
@@ -99,7 +132,7 @@ class _IkonTab extends StatelessWidget {
     if (lencana <= 0) return Icon(ikon);
     return Badge(
       label: Text(lencana > 9 ? '9+' : '$lencana'),
-      backgroundColor: Warna.merahUtama,
+      backgroundColor: Warna.bahaya,
       child: Icon(ikon),
     );
   }
