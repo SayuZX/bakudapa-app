@@ -72,6 +72,10 @@
     native <methods>;
 }
 
+-keep class org.gatechstudio.malutprovkab.Kepemilikan {
+    native <methods>;
+}
+
 -keepclassmembers class * implements android.os.Parcelable {
     public static final ** CREATOR;
 }
