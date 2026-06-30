@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../config/endpoints.dart';
 import '../errors/kesalahan.dart';
 import '../network/klien_jaringan.dart';
 import 'model_verifikasi_wajah_ai.dart';
@@ -14,7 +15,7 @@ class LayananVerifikasiWajahAi {
   }) async {
     try {
       final r = await KlienJaringan.instance.dio.post(
-        '/biometrik/verifikasi-wajah',
+        Endpoints.biometrikVerifikasiWajah,
         data: {
           'foto_dokumen_kunci': kunciFotoDokumen,
           'foto_wajah_kunci': kunciFotoWajah,
