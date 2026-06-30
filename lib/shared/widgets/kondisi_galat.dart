@@ -1,29 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import '../../core/extensions/konteks.dart';
+import '../../core/localization/teks.dart';
 import '../../core/theme/dimensi.dart';
 import '../../core/theme/warna.dart';
 import 'tombol_utama.dart';
 
-class KondisiGalat extends StatelessWidget {
+class KondisiGalat extends ConsumerWidget {
   const KondisiGalat({
     super.key,
     required this.pesan,
-    this.judul = 'Terjadi kesalahan',
+    this.judul,
     this.saatCobaLagi,
-    this.labelCobaLagi = 'Coba lagi',
+    this.labelCobaLagi,
     this.ikon = HugeIcons.strokeRoundedAlert02,
   });
 
   final String pesan;
-  final String judul;
+  final String? judul;
   final VoidCallback? saatCobaLagi;
-  final String labelCobaLagi;
+  final String? labelCobaLagi;
   final IconData ikon;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(teksProvider);
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: Jarak.xxl,
@@ -43,7 +46,11 @@ class KondisiGalat extends StatelessWidget {
             child: Icon(ikon, size: 32, color: Warna.bahaya),
           ),
           const SizedBox(height: Jarak.lg),
-          Text(judul, style: context.teks.titleMedium, textAlign: TextAlign.center),
+          Text(
+            judul ?? t.terjadiKesalahan,
+            style: context.teks.titleMedium,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: Jarak.xs),
           Text(
             pesan,
@@ -52,7 +59,11 @@ class KondisiGalat extends StatelessWidget {
           ),
           if (saatCobaLagi != null) ...[
             const SizedBox(height: Jarak.xl),
-            TombolUtama(label: labelCobaLagi, saatTekan: saatCobaLagi, melebar: false),
+            TombolUtama(
+              label: labelCobaLagi ?? t.cobaLagi,
+              saatTekan: saatCobaLagi,
+              melebar: false,
+            ),
           ],
         ],
       ),
