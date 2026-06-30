@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
@@ -23,18 +25,27 @@ class HalamanMaintenance extends ConsumerStatefulWidget {
 }
 
 class _HalamanMaintenanceState extends ConsumerState<HalamanMaintenance> {
-  bool _memeriksa = false;
+  bool _memuatManual = false;
 
-  Future<void> _cobaUlang() async {
-    setState(() => _memeriksa = true);
+  Future<void> _cobaSekarang() async {
+    if (_memuatManual) return;
+    setState(() => _memuatManual = true);
     await LayananStatusSistem.instance.cek(paksaUlang: true);
-    if (mounted) setState(() => _memeriksa = false);
+    if (mounted) setState(() => _memuatManual = false);
   }
 
   void _keluarAplikasi() {
-    if (Platform.isAndroid) {
-      SystemNavigator.pop();
-    }
+    if (Platform.isAndroid) SystemNavigator.pop();
+  }
+
+  String _formatTanggal(DateTime tanggal, KodeBahasa bahasa) {
+    final lokal = bahasa == KodeBahasa.en ? 'en_US' : 'id_ID';
+    return DateFormat('d MMMM yyyy, HH:mm', lokal).format(tanggal.toLocal());
+  }
+
+  String _formatJam(DateTime tanggal, KodeBahasa bahasa) {
+    final lokal = bahasa == KodeBahasa.en ? 'en_US' : 'id_ID';
+    return DateFormat('HH:mm', lokal).format(tanggal.toLocal());
   }
 
   @override
@@ -42,6 +53,7 @@ class _HalamanMaintenanceState extends ConsumerState<HalamanMaintenance> {
     final status = ref.watch(statusMaintenanceProvider);
     final t = ref.watch(teksProvider);
     final bahasa = ref.watch(penyediaBahasa);
+    final memeriksa = _memuatManual;
 
     return PopScope(
       canPop: false,
@@ -53,7 +65,7 @@ class _HalamanMaintenanceState extends ConsumerState<HalamanMaintenance> {
             child: Column(
               children: [
                 const Spacer(),
-                _Ikon(),
+                const _IkonPemeliharaan(),
                 const SizedBox(height: Jarak.xxl),
                 Text(
                   status.judul?.isNotEmpty == true
@@ -69,22 +81,22 @@ class _HalamanMaintenanceState extends ConsumerState<HalamanMaintenance> {
                 Text(
                   status.pesan?.isNotEmpty == true
                       ? status.pesan!
-                      : t.maintenanceHalamanPesan,
+                      : t.maintenanceSubPesan,
                   textAlign: TextAlign.center,
                   style: context.teks.bodyMedium?.copyWith(
                     color: Warna.teksKedua,
                     height: 1.6,
                   ),
                 ),
-                if (status.estimasiSelesai != null) ...[
-                  const SizedBox(height: Jarak.lg),
-                  _BarisInfo(
-                    ikon: HugeIcons.strokeRoundedClock01,
-                    teks: t.estimasiSelesai(
-                      _formatTanggal(status.estimasiSelesai!, bahasa),
-                    ),
-                  ),
-                ],
+                const SizedBox(height: Jarak.lg),
+                _BarisInfo(
+                  ikon: HugeIcons.strokeRoundedClock01,
+                  teks: status.estimasiSelesai != null
+                      ? t.estimasiSelesai(
+                          _formatTanggal(status.estimasiSelesai!, bahasa),
+                        )
+                      : t.maintenanceSegeraKembali,
+                ),
                 if (status.kontakDukungan != null &&
                     status.kontakDukungan!.isNotEmpty) ...[
                   const SizedBox(height: 8),
@@ -94,10 +106,21 @@ class _HalamanMaintenanceState extends ConsumerState<HalamanMaintenance> {
                   ),
                 ],
                 const Spacer(),
+                _StatusRealtime(
+                  memeriksa: memeriksa,
+                  label: memeriksa
+                      ? t.maintenanceStatusMemeriksa
+                      : status.diperiksaPada != null
+                      ? t.maintenanceTerakhirDiperiksa(
+                          _formatJam(status.diperiksaPada!, bahasa),
+                        )
+                      : t.maintenanceStatusAktif,
+                ),
+                const SizedBox(height: Jarak.lg),
                 _TombolUtama(
-                  label: t.cobaLagi,
-                  memuat: _memeriksa,
-                  saatTekan: _cobaUlang,
+                  label: t.maintenanceCobaSekarang,
+                  memuat: _memuatManual,
+                  saatTekan: _cobaSekarang,
                 ),
                 const SizedBox(height: Jarak.sm),
                 _TombolKedua(
@@ -107,35 +130,83 @@ class _HalamanMaintenanceState extends ConsumerState<HalamanMaintenance> {
                 const SizedBox(height: Jarak.xl),
               ],
             ),
-          ),
+          )
+              .animate()
+              .fadeIn(duration: 320.ms, curve: Curves.easeOutCubic)
+              .slideY(begin: 0.04, end: 0, duration: 320.ms),
         ),
       ),
     );
   }
-
-  String _formatTanggal(DateTime tanggal, KodeBahasa bahasa) {
-    final lokal = bahasa == KodeBahasa.en ? 'en_US' : 'id_ID';
-    return DateFormat('d MMMM yyyy, HH:mm', lokal).format(tanggal.toLocal());
-  }
 }
 
-class _Ikon extends StatelessWidget {
+class _IkonPemeliharaan extends StatelessWidget {
+  const _IkonPemeliharaan();
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 96,
-      height: 96,
-      decoration: BoxDecoration(
-        color: Warna.netral50,
-        shape: BoxShape.circle,
-        border: Border.all(color: Warna.garis, width: 1.4),
-      ),
-      alignment: Alignment.center,
-      child: const Icon(
-        HugeIcons.strokeRoundedTools,
-        size: 42,
-        color: Warna.teksUtama,
-      ),
+          width: 96,
+          height: 96,
+          decoration: BoxDecoration(
+            color: Warna.primerLembut,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            HugeIcons.strokeRoundedWrench01,
+            size: 42,
+            color: Warna.primer,
+          ),
+        )
+        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .scaleXY(
+          begin: 1,
+          end: 1.06,
+          duration: 1600.ms,
+          curve: Curves.easeInOut,
+        );
+  }
+}
+
+class _StatusRealtime extends StatelessWidget {
+  const _StatusRealtime({required this.memeriksa, required this.label});
+  final bool memeriksa;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (memeriksa)
+          const SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(strokeWidth: 2, color: Warna.primer),
+          )
+        else
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: Warna.peringatan,
+              shape: BoxShape.circle,
+            ),
+          ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: context.teks.labelMedium?.copyWith(
+              color: Warna.teksKetiga,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -186,7 +257,7 @@ class _TombolUtama extends StatelessWidget {
       child: FilledButton(
         onPressed: memuat ? null : saatTekan,
         style: FilledButton.styleFrom(
-          backgroundColor: Warna.merahUtama,
+          backgroundColor: Warna.primer,
           disabledBackgroundColor: Warna.netral200,
           foregroundColor: Colors.white,
           shape: const StadiumBorder(),
@@ -200,7 +271,9 @@ class _TombolUtama extends StatelessWidget {
                 width: 22,
                 height: 22,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2.4, color: Colors.white),
+                  strokeWidth: 2.4,
+                  color: Colors.white,
+                ),
               )
             : Text(label),
       ),
