@@ -131,15 +131,6 @@ class _LayarBlokirKeamanan extends ConsumerWidget {
 
   _IsiBlokir _isi() {
     switch (kondisi.status) {
-      case StatusOtentikasi.vpnTerdeteksi:
-        return const _IsiBlokir(
-          ikon: HugeIcons.strokeRoundedShieldUser,
-          judul: 'Akses Tidak Dapat Dilanjutkan',
-          deskripsi:
-              'Sistem mendeteksi penggunaan VPN atau koneksi yang menyamarkan lokasi perangkat. Demi keamanan data kependudukan dan validitas aktivitas layanan, silakan matikan VPN terlebih dahulu lalu coba kembali.',
-          tampilkanCobaUlang: true,
-          tampilkanKeluar: true,
-        );
       case StatusOtentikasi.perangkatTidakAman:
         return const _IsiBlokir(
           ikon: HugeIcons.strokeRoundedSecurityBlock,
@@ -222,7 +213,7 @@ class _LayarBlokirKeamanan extends ConsumerWidget {
                         .read(penyediaOtentikasi.notifier)
                         .cobaUlangPemeriksaan(),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Warna.merahUtama,
+                      backgroundColor: Warna.primer,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: const StadiumBorder(),
@@ -317,7 +308,7 @@ class _BarKemajuan extends StatelessWidget {
             value: animasi.value,
             minHeight: 4,
             backgroundColor: Warna.netral100,
-            valueColor: const AlwaysStoppedAnimation<Color>(Warna.merahUtama),
+            valueColor: const AlwaysStoppedAnimation<Color>(Warna.primer),
           ),
         );
       },
