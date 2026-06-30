@@ -10,9 +10,6 @@ import '../../core/theme/dimensi.dart';
 import '../../core/theme/warna.dart';
 import '../providers/penyedia_muat_global.dart';
 
-/// Pembungkus aplikasi yang menampilkan dialog muat global di atas seluruh
-/// layar saat [penyediaMuatGlobal] aktif. Dipasang sekali di
-/// `MaterialApp.builder` sehingga konsisten di semua halaman.
 class OverlayMuatGlobal extends ConsumerWidget {
   const OverlayMuatGlobal({super.key, required this.anak});
 
@@ -34,9 +31,6 @@ class OverlayMuatGlobal extends ConsumerWidget {
   }
 }
 
-/// Modal muat di tengah layar dengan latar gelap + blur. Bersifat blocking:
-/// tombol back dimatikan, sentuhan di luar diserap, dan tidak dapat ditutup
-/// manual — hanya hilang saat proses selesai.
 class _DialogMuat extends StatelessWidget {
   const _DialogMuat({this.judul, this.pesan});
 
@@ -49,7 +43,6 @@ class _DialogMuat extends StatelessWidget {
       canPop: false,
       child: Stack(
         children: [
-          // Latar: blur tipis + dim, sekaligus penghalang sentuhan.
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
@@ -80,7 +73,7 @@ class _DialogMuat extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     LoadingAnimationWidget.fourRotatingDots(
-                      color: Warna.merahUtama,
+                      color: Warna.primer,
                       size: 46,
                     ),
                     const SizedBox(height: Jarak.xl),
