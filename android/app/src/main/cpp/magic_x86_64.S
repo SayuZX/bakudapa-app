@@ -1,5 +1,3 @@
-// Lapisan kepemilikan — assembly x86-64 (x86_64).
-// Fragmen seed identitas (SHA-256 string kepemilikan ter-obfuscate) di immediate movabs.
     .text
 
 .macro FRAG name, imm
