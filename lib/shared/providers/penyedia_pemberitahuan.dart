@@ -1,107 +1,258 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/config/ui_behavior.dart';
+import '../../features/notifications/data/repositori_pemberitahuan.dart';
 import '../models/pemberitahuan.dart';
 import 'penyedia_otentikasi.dart';
 import 'penyedia_repositori.dart';
 
-class PengaturPemberitahuan extends StateNotifier<AsyncValue<List<Pemberitahuan>>> {
-  PengaturPemberitahuan(this._ref) : super(const AsyncValue.loading()) {
-    final status = _ref.read(penyediaOtentikasi).status;
-    if (status == StatusOtentikasi.masuk) {
-      muat();
-      _mulaiPoling();
-    }
-    _langgan = _ref.listen<KondisiOtentikasi>(penyediaOtentikasi, (sebelum, sesudah) {
-      if (sebelum?.status != StatusOtentikasi.masuk &&
-          sesudah.status == StatusOtentikasi.masuk) {
+class KondisiPemberitahuan {
+  const KondisiPemberitahuan({
+    this.daftar = const [],
+    this.memuat = false,
+    this.memuatLagi = false,
+    this.galat,
+    this.halaman = 1,
+    this.totalHalaman = 1,
+    this.filterDibaca,
+    this.filterKategori,
+  });
+
+  final List<Pemberitahuan> daftar;
+  final bool memuat;
+  final bool memuatLagi;
+  final Object? galat;
+  final int halaman;
+  final int totalHalaman;
+  final bool? filterDibaca;
+  final KategoriPemberitahuan? filterKategori;
+
+  bool get bisaLanjut => halaman < totalHalaman;
+  bool get kosong => daftar.isEmpty;
+
+  KondisiPemberitahuan salin({
+    List<Pemberitahuan>? daftar,
+    bool? memuat,
+    bool? memuatLagi,
+    Object? galat,
+    bool hapusGalat = false,
+    int? halaman,
+    int? totalHalaman,
+  }) {
+    return KondisiPemberitahuan(
+      daftar: daftar ?? this.daftar,
+      memuat: memuat ?? this.memuat,
+      memuatLagi: memuatLagi ?? this.memuatLagi,
+      galat: hapusGalat ? null : (galat ?? this.galat),
+      halaman: halaman ?? this.halaman,
+      totalHalaman: totalHalaman ?? this.totalHalaman,
+      filterDibaca: filterDibaca,
+      filterKategori: filterKategori,
+    );
+  }
+}
+
+class PengaturPemberitahuan extends StateNotifier<KondisiPemberitahuan> {
+  PengaturPemberitahuan(this._ref) : super(const KondisiPemberitahuan()) {
+    if (_masuk) muat();
+    _langgan = _ref.listen<KondisiOtentikasi>(penyediaOtentikasi, (
+      sebelum,
+      sesudah,
+    ) {
+      final masukBaru =
+          sebelum?.status != StatusOtentikasi.masuk &&
+          sesudah.status == StatusOtentikasi.masuk;
+      final keluar =
+          sebelum?.status == StatusOtentikasi.masuk &&
+          sesudah.status != StatusOtentikasi.masuk;
+      if (masukBaru) {
         muat();
-        _mulaiPoling();
-      } else if (sebelum?.status == StatusOtentikasi.masuk &&
-          sesudah.status != StatusOtentikasi.masuk) {
-        _hentikanPoling();
-        state = const AsyncValue.data([]);
+      } else if (keluar) {
+        state = const KondisiPemberitahuan();
       }
     });
   }
 
   final Ref _ref;
-  Timer? _poling;
   ProviderSubscription<KondisiOtentikasi>? _langgan;
+  bool _sibuk = false;
 
-  void _mulaiPoling() {
-    _poling?.cancel();
-    _poling = Timer.periodic(
-      UiBehavior.intervalPolingNotifikasi,
-      (_) => muatDiam(),
-    );
-  }
+  static const int _ukuran = 20;
 
-  void _hentikanPoling() {
-    _poling?.cancel();
-    _poling = null;
+  RepositoriPemberitahuan get _repo =>
+      _ref.read(penyediaRepositoriPemberitahuan);
+
+  bool get _masuk =>
+      _ref.read(penyediaOtentikasi).status == StatusOtentikasi.masuk;
+
+  String? get _kategoriParam {
+    final k = state.filterKategori;
+    if (k == null || k == KategoriPemberitahuan.takDikenal) return null;
+    return k.name;
   }
 
   Future<void> muat() async {
-    if (_ref.read(penyediaOtentikasi).status != StatusOtentikasi.masuk) return;
-    state = const AsyncValue.loading();
+    if (!_masuk || _sibuk) return;
+    _sibuk = true;
+    state = state.salin(memuat: true, hapusGalat: true);
     try {
-      final data = await _ref.read(penyediaRepositoriPemberitahuan).daftar();
+      final hasil = await _repo.daftar(
+        halaman: 1,
+        ukuran: _ukuran,
+        dibaca: state.filterDibaca,
+        kategori: _kategoriParam,
+      );
       if (!mounted) return;
-      state = AsyncValue.data(data);
-    } catch (e, st) {
+      state = state.salin(
+        daftar: hasil.daftar,
+        memuat: false,
+        halaman: hasil.halaman,
+        totalHalaman: hasil.totalHalaman,
+      );
+    } catch (e) {
       if (!mounted) return;
-      state = AsyncValue.error(e, st);
+      state = state.salin(memuat: false, galat: e);
+    } finally {
+      _sibuk = false;
     }
   }
 
-  Future<void> muatDiam() async {
-    if (_ref.read(penyediaOtentikasi).status != StatusOtentikasi.masuk) return;
+  Future<void> segarkan() => muat();
+
+  Future<void> muatBerikutnya() async {
+    if (!_masuk || _sibuk || state.memuat || !state.bisaLanjut) return;
+    _sibuk = true;
+    state = state.salin(memuatLagi: true);
     try {
-      final data = await _ref.read(penyediaRepositoriPemberitahuan).daftar();
+      final hasil = await _repo.daftar(
+        halaman: state.halaman + 1,
+        ukuran: _ukuran,
+        dibaca: state.filterDibaca,
+        kategori: _kategoriParam,
+      );
       if (!mounted) return;
-      state = AsyncValue.data(data);
-    } catch (_) {}
+      state = state.salin(
+        daftar: [...state.daftar, ...hasil.daftar],
+        memuatLagi: false,
+        halaman: hasil.halaman,
+        totalHalaman: hasil.totalHalaman,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      state = state.salin(memuatLagi: false);
+    } finally {
+      _sibuk = false;
+    }
+  }
+
+  Future<void> pilihDibaca(bool? dibaca) async {
+    state = KondisiPemberitahuan(
+      filterDibaca: dibaca,
+      filterKategori: state.filterKategori,
+    );
+    await muat();
+  }
+
+  Future<void> pilihKategori(KategoriPemberitahuan? kategori) async {
+    state = KondisiPemberitahuan(
+      filterDibaca: state.filterDibaca,
+      filterKategori: kategori,
+    );
+    await muat();
   }
 
   Future<void> tandaiDibaca(String id) async {
-    final saatIni = state.valueOrNull;
-    if (saatIni == null) return;
-    state = AsyncValue.data([
-      for (final n in saatIni) n.id == id ? n.tandaiDibaca() : n,
-    ]);
+    final adaBelum = state.daftar.any((n) => n.id == id && !n.dibaca);
+    if (adaBelum) {
+      state = state.salin(
+        daftar: [
+          for (final n in state.daftar) n.id == id ? n.tandaiDibaca() : n,
+        ],
+      );
+      _ref.read(penyediaJumlahBelumDibaca.notifier).kurangi();
+    }
     try {
-      await _ref.read(penyediaRepositoriPemberitahuan).tandaiDibaca(id);
+      await _repo.tandaiDibaca(id);
     } catch (_) {}
   }
 
   Future<void> tandaiSemuaDibaca() async {
-    final saatIni = state.valueOrNull;
-    if (saatIni == null || saatIni.isEmpty) return;
-    state = AsyncValue.data([for (final n in saatIni) n.tandaiDibaca()]);
+    if (state.daftar.isEmpty) return;
+    state = state.salin(
+      daftar: [for (final n in state.daftar) n.tandaiDibaca()],
+    );
+    _ref.read(penyediaJumlahBelumDibaca.notifier).nolkan();
     try {
-      await _ref.read(penyediaRepositoriPemberitahuan).tandaiSemuaDibaca();
+      await _repo.tandaiSemuaDibaca();
     } catch (_) {}
+    _ref.read(penyediaJumlahBelumDibaca.notifier).segarkan();
   }
 
   @override
   void dispose() {
-    _hentikanPoling();
     _langgan?.close();
     _langgan = null;
     super.dispose();
   }
 }
 
-final penyediaPemberitahuan = StateNotifierProvider<PengaturPemberitahuan,
-    AsyncValue<List<Pemberitahuan>>>((ref) {
-  return PengaturPemberitahuan(ref);
-});
+final penyediaPemberitahuan =
+    StateNotifierProvider<PengaturPemberitahuan, KondisiPemberitahuan>((ref) {
+      return PengaturPemberitahuan(ref);
+    });
 
-final penyediaJumlahBelumDibaca = Provider<int>((ref) {
-  final daftar = ref.watch(penyediaPemberitahuan).valueOrNull;
-  if (daftar == null) return 0;
-  return daftar.where((n) => !n.dibaca).length;
-});
+class PengaturJumlahBelumDibaca extends StateNotifier<int> {
+  PengaturJumlahBelumDibaca(this._ref) : super(0) {
+    if (_masuk) segarkan();
+    _langgan = _ref.listen<KondisiOtentikasi>(penyediaOtentikasi, (
+      sebelum,
+      sesudah,
+    ) {
+      if (sesudah.status == StatusOtentikasi.masuk) {
+        segarkan();
+      } else {
+        state = 0;
+      }
+    });
+  }
+
+  final Ref _ref;
+  ProviderSubscription<KondisiOtentikasi>? _langgan;
+  bool _sibuk = false;
+
+  bool get _masuk =>
+      _ref.read(penyediaOtentikasi).status == StatusOtentikasi.masuk;
+
+  Future<void> segarkan() async {
+    if (!_masuk || _sibuk) return;
+    _sibuk = true;
+    try {
+      final jumlah = await _ref
+          .read(penyediaRepositoriPemberitahuan)
+          .jumlahBelumDibaca();
+      if (!mounted) return;
+      state = jumlah;
+    } catch (_) {
+    } finally {
+      _sibuk = false;
+    }
+  }
+
+  void kurangi([int jumlah = 1]) {
+    final nilai = state - jumlah;
+    state = nilai < 0 ? 0 : nilai;
+  }
+
+  void nolkan() => state = 0;
+
+  @override
+  void dispose() {
+    _langgan?.close();
+    _langgan = null;
+    super.dispose();
+  }
+}
+
+final penyediaJumlahBelumDibaca =
+    StateNotifierProvider<PengaturJumlahBelumDibaca, int>((ref) {
+      return PengaturJumlahBelumDibaca(ref);
+    });
