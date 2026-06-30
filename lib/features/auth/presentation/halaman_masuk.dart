@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
+﻿import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,7 +16,9 @@ import '../../../core/utils/penunda.dart';
 import '../../../core/utils/validasi.dart';
 import '../../../shared/providers/penyedia_muat_global.dart';
 import '../../../shared/providers/penyedia_otentikasi.dart';
+import '../../perangkat/presentation/widgets/lembar_keluarkan_perangkat.dart';
 import '../data/model_otp.dart';
+import '../domain/repositori_otentikasi.dart';
 import 'widgets/bingkai_otentikasi.dart';
 import 'widgets/isian_garis_bawah.dart';
 
@@ -55,7 +56,8 @@ class _HalamanMasukState extends ConsumerState<HalamanMasuk> {
   }
 
   void _perbaruiValiditas() {
-    final boleh = Validasi.identitasAtauSurel(_identitas.text) == null &&
+    final boleh =
+        Validasi.identitasAtauSurel(_identitas.text) == null &&
         _kataSandi.text.trim().isNotEmpty;
     if (boleh != _bolehKirim) {
       setState(() => _bolehKirim = boleh);
@@ -92,30 +94,43 @@ class _HalamanMasukState extends ConsumerState<HalamanMasuk> {
       setState(() => _memuat = true);
       try {
         final identitas = _identitas.text.trim();
-        final perluOtp = await ref.read(penyediaMuatGlobal.notifier).jalankan<bool>(
-          () => ref.read(penyediaOtentikasi.notifier).masuk(
-                identitas: identitas,
-                kataSandi: _kataSandi.text,
-              ),
-          judul: t.mohonTunggu,
-          pesan: t.memverifikasiAkun,
-        );
+        final hasilLogin = await ref
+            .read(penyediaMuatGlobal.notifier)
+            .jalankan<HasilLogin>(
+              () => ref
+                  .read(penyediaOtentikasi.notifier)
+                  .masuk(identitas: identitas, kataSandi: _kataSandi.text),
+              judul: t.mohonTunggu,
+              pesan: t.memverifikasiAkun,
+            );
         if (!mounted) return;
-        if (perluOtp) {
-          await context.push(
+        if (hasilLogin.perluOtp) {
+          context.push(
             NamaRute.otp,
-            extra: {
-              'identitas': identitas,
-              'tipe': TipeOtp.login,
-            },
+            extra: {'identitas': identitas, 'tipe': TipeOtp.login},
           );
-        } else {
-          context.tampilkanSukses(t.selamatDatang);
+          return;
         }
-      } on KesalahanValidasi catch (e) {
+        if (hasilLogin.perluKelolaPerangkat) {
+          context.push(
+            NamaRute.kelolaPerangkat,
+            extra: hasilLogin.kelolaPerangkat!.perangkatAktif,
+          );
+          return;
+        }
+
+        context.tampilkanSukses(t.selamatDatang);
+      } on KesalahanKredensialSalah catch (e) {
         if (!mounted) return;
         setState(() {
-          final pesan = e.pesan.toLowerCase();
+          _galatIdentitas = t.periksaDataLogin;
+          _galatKataSandi = e.pesan;
+        });
+        _kunciForm.currentState?.validate();
+      } on KesalahanValidasi catch (e) {
+        if (!mounted) return;
+        final pesan = e.pesan.toLowerCase();
+        setState(() {
           if (pesan.contains('kata sandi') ||
               pesan.contains('password') ||
               pesan.contains('salah')) {
@@ -150,6 +165,31 @@ class _HalamanMasukState extends ConsumerState<HalamanMasuk> {
           pesan: e.pesan,
           nada: NadaDialog.peringatan,
         );
+      } on KesalahanBatasPerangkat catch (e) {
+        if (!mounted) return;
+        final identitas = _identitas.text.trim();
+        final hasil = await LembarKeluarkanPerangkat.tampilkan(
+          context,
+          identitas: identitas,
+          kataSandi: _kataSandi.text,
+          perangkat: e.perangkatAktif,
+        );
+        if (!mounted || hasil == null) return;
+        if (hasil.perluOtp) {
+          context.push(
+            NamaRute.otp,
+            extra: {'identitas': identitas, 'tipe': TipeOtp.login},
+          );
+          return;
+        }
+        if (hasil.perluKelolaPerangkat) {
+          context.push(
+            NamaRute.kelolaPerangkat,
+            extra: hasil.kelolaPerangkat!.perangkatAktif,
+          );
+          return;
+        }
+        context.tampilkanSukses(t.selamatDatang);
       } on Kesalahan catch (e) {
         if (!mounted) return;
         context.tampilkanGalat(e.pesan);
@@ -157,17 +197,15 @@ class _HalamanMasukState extends ConsumerState<HalamanMasuk> {
         if (!mounted) return;
         context.tampilkanGalat(t.tidakDapatMasuk);
       } finally {
-        if (mounted) setState(() => _memuat = false);
+        if (mounted) {
+          _kataSandi.clear();
+          setState(() => _memuat = false);
+        }
       }
     });
     if (!boleh) {
       context.tampilkanGalat(t.mohonTungguSebentar);
     }
-  }
-
-  Future<void> _masukDemo() async {
-    FocusScope.of(context).unfocus();
-    await ref.read(penyediaOtentikasi.notifier).masukDemo();
   }
 
   @override
@@ -216,10 +254,13 @@ class _HalamanMasukState extends ConsumerState<HalamanMasuk> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 4,
+                  ),
                   minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  foregroundColor: Warna.merahUtama,
+                  foregroundColor: Warna.primer,
                 ),
                 onPressed: () => context.push(NamaRute.lupaKataSandi),
                 child: Text(
@@ -240,24 +281,6 @@ class _HalamanMasukState extends ConsumerState<HalamanMasuk> {
               aktif: _bolehKirim,
               saatTekan: _kirim,
             ),
-            if (kDebugMode) ...[
-              const SizedBox(height: Jarak.md),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton.icon(
-                  onPressed: _masukDemo,
-                  icon: const Icon(Icons.build_circle_outlined, size: 18),
-                  label: const Text('Masuk Demo (Dev)'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Warna.teksKedua,
-                    side: const BorderSide(color: Warna.garisTegas),
-                    shape: const StadiumBorder(),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-            ],
             const SizedBox(height: Jarak.xxl),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -273,7 +296,7 @@ class _HalamanMasukState extends ConsumerState<HalamanMasuk> {
                   child: Text(
                     t.daftar,
                     style: const TextStyle(
-                      color: Warna.merahUtama,
+                      color: Warna.primer,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -307,7 +330,7 @@ class _TombolPil extends StatelessWidget {
       child: FilledButton(
         onPressed: (memuat || !aktif) ? null : saatTekan,
         style: FilledButton.styleFrom(
-          backgroundColor: Warna.merahUtama,
+          backgroundColor: Warna.primer,
           foregroundColor: Colors.white,
           disabledBackgroundColor: Warna.netral200,
           disabledForegroundColor: Warna.teksNonaktif,
