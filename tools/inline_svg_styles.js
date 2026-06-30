@@ -20,6 +20,7 @@ const css = styleMatch[1];
 
 const classMap = {};
 const ruleRe = /\.([a-zA-Z_][\w-]*)\s*\{\s*([^}]+?)\s*\}/g;
+const declRe = /([a-zA-Z-]+)\s*:\s*([^;]+);?/g;
 let m;
 while ((m = ruleRe.exec(css)) !== null) {
   const cls = m[1];
