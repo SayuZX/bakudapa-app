@@ -5,19 +5,31 @@ import 'package:go_router/go_router.dart';
 import '../../features/applications/presentation/halaman_detail_permohonan.dart';
 import '../../features/applications/presentation/halaman_riwayat.dart';
 import '../../features/auth/data/model_otp.dart';
+import '../../features/auth/presentation/halaman_buat_kredensial.dart';
 import '../../features/auth/presentation/halaman_lupa_kata_sandi.dart';
 import '../../features/auth/presentation/halaman_reset_kata_sandi_baru.dart';
 import '../../features/auth/presentation/halaman_masuk.dart';
 import '../../features/auth/presentation/halaman_otp.dart';
 import '../../features/dashboard/presentation/kerangka_utama.dart';
-import '../../features/home/presentation/home_page.dart';
 import '../../features/help/presentation/halaman_bantuan.dart';
 import '../../features/ai/presentation/halaman_ai_chat.dart';
 import '../../features/help/presentation/halaman_kebijakan.dart';
+import '../../features/home/presentation/halaman_beranda.dart';
 import '../../features/maintenance/presentation/halaman_maintenance.dart';
 import '../../features/notifications/presentation/halaman_pemberitahuan.dart';
 import '../../features/onboarding/presentation/halaman_onboarding.dart';
+import '../../features/perangkat/presentation/halaman_kelola_perangkat.dart';
+import '../../features/perangkat/presentation/halaman_perangkat_aktif.dart';
 import '../../features/profile/presentation/halaman_profil.dart';
+import '../../features/services/presentation/halaman_awal_permohonan.dart';
+import '../../features/services/presentation/halaman_formulir_permohonan.dart';
+import '../../features/services/presentation/halaman_layanan.dart';
+import '../../features/services/presentation/halaman_sukses_permohonan.dart';
+import '../../features/settings/presentation/halaman_edit_profil.dart';
+import '../../features/settings/presentation/halaman_ganti_kata_sandi.dart';
+import '../../features/settings/presentation/halaman_pengaturan.dart';
+import '../../features/applications/domain/repositori_permohonan.dart';
+import '../../features/tutorial/presentation/halaman_panduan.dart';
 import '../../features/registration/presentation/pages/halaman_foto_dokumen.dart';
 import '../../features/registration/presentation/pages/halaman_foto_wajah.dart';
 import '../../features/registration/presentation/pages/halaman_gagal_foto_wajah.dart';
@@ -26,30 +38,32 @@ import '../../features/registration/presentation/pages/halaman_intro_foto_wajah.
 import '../../features/registration/presentation/pages/halaman_intro_liveness.dart';
 import '../../features/registration/presentation/pages/halaman_kebijakan_registrasi.dart';
 import '../../features/registration/presentation/pages/halaman_liveness.dart';
-import '../../features/registration/presentation/pages/halaman_persetujuan_sidik_jari.dart';
 import '../../features/registration/presentation/pages/halaman_proses_verifikasi_ai.dart';
-import '../../features/registration/presentation/pages/halaman_sidik_jari.dart';
-import '../../features/registration/presentation/pages/halaman_suara.dart';
 import '../../features/registration/presentation/pages/halaman_sukses_registrasi.dart';
-import '../../features/services/presentation/halaman_detail_layanan.dart';
-import '../../features/services/presentation/halaman_formulir_layanan.dart';
-import '../../features/services/presentation/halaman_layanan.dart';
-import '../../features/settings/presentation/halaman_pengaturan.dart';
 import '../../features/splash/presentation/halaman_splash.dart';
-import '../../features/tutorial/presentation/halaman_panduan.dart';
 import '../../shared/models/jenis_layanan.dart';
+import '../../shared/models/perangkat_aktif.dart';
 import '../../shared/providers/penyedia_maintenance.dart';
 import '../../shared/providers/penyedia_otentikasi.dart';
+import '../activity/pengamat_aktivitas_rute.dart';
 import '../dialogs/dialog_aplikasi.dart';
+import '../security/pengamat_pelindung_layar.dart';
 import 'nama_rute.dart';
 
 String? _tujuanTertunda;
+
+RingkasanLayanan _ringkasanDari(Object? extra) {
+  if (extra is RingkasanLayanan) return extra;
+  if (extra is JenisLayanan) return RingkasanLayanan.dariJenis(extra);
+  return RingkasanLayanan.dariJenis(JenisLayanan.aktaKelahiran);
+}
 
 final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: DialogAplikasi.kunciNavigatorRoot,
     initialLocation: NamaRute.splash,
     debugLogDiagnostics: false,
+    observers: [PengamatAktivitasRute(), PengamatPelindungLayar()],
     refreshListenable: _Pendengar(ref),
     redirect: (context, state) {
       final otentikasi = ref.read(penyediaOtentikasi);
@@ -79,9 +93,12 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
         '/penafian-',
         '/pernyataan-',
       ];
-      final hanyaAnonim = rutePublikHanyaAnonim.contains(lokasi) ||
+      final hanyaAnonim =
+          rutePublikHanyaAnonim.contains(lokasi) ||
           prefixHanyaAnonim.any((p) => lokasi.startsWith(p));
-      final bebas = prefixBebas.any((p) => lokasi.startsWith(p));
+      final bebas =
+          prefixBebas.any((p) => lokasi.startsWith(p)) ||
+          lokasi == NamaRute.kelolaPerangkat;
 
       if (status == StatusOtentikasi.memuat ||
           otentikasi.terblokirOlehKeamanan) {
@@ -95,8 +112,15 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
         if (hanyaAnonim || bebas) return null;
         return NamaRute.masuk;
       }
-      if (bebas) return null;
-      if (hanyaAnonim || lokasi == NamaRute.splash) {
+      if (otentikasi.wajibAturKredensial) {
+        return lokasi == NamaRute.buatKredensial
+            ? null
+            : NamaRute.buatKredensial;
+      }
+      if (lokasi == NamaRute.buatKredensial) {
+        return NamaRute.beranda;
+      }
+      if (lokasi == NamaRute.masuk || lokasi == NamaRute.splash) {
         final tertunda = _tujuanTertunda;
         _tujuanTertunda = null;
         if (tertunda != null && tertunda != NamaRute.splash) return tertunda;
@@ -105,10 +129,7 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: NamaRute.splash,
-        builder: (_, _) => const HalamanSplash(),
-      ),
+      GoRoute(path: NamaRute.splash, builder: (_, _) => const HalamanSplash()),
       GoRoute(
         path: NamaRute.maintenance,
         builder: (_, _) => const HalamanMaintenance(),
@@ -117,10 +138,7 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
         path: NamaRute.onboarding,
         builder: (_, _) => const HalamanOnboarding(),
       ),
-      GoRoute(
-        path: NamaRute.masuk,
-        builder: (_, _) => const HalamanMasuk(),
-      ),
+      GoRoute(path: NamaRute.masuk, builder: (_, _) => const HalamanMasuk()),
       GoRoute(
         path: NamaRute.daftar,
         builder: (_, _) => const HalamanIdentitasRegistrasi(),
@@ -157,21 +175,6 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
         path: NamaRute.daftarKameraLiveness,
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
         builder: (_, _) => const HalamanLiveness(),
-      ),
-      GoRoute(
-        path: NamaRute.daftarSuara,
-        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanSuara(),
-      ),
-      GoRoute(
-        path: NamaRute.daftarPersetujuanSidikJari,
-        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanPersetujuanSidikJari(),
-      ),
-      GoRoute(
-        path: NamaRute.daftarSidikJari,
-        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanSidikJari(),
       ),
       GoRoute(
         path: NamaRute.daftarSukses,
@@ -214,6 +217,10 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
           tokenReset: state.extra is String ? state.extra as String : '',
         ),
       ),
+      GoRoute(
+        path: NamaRute.buatKredensial,
+        builder: (_, _) => const HalamanBuatKredensial(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, navigationShell) =>
             KerangkaUtama(navigationShell: navigationShell),
@@ -222,8 +229,10 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: NamaRute.beranda,
-                pageBuilder: (_, _) =>
-                    const NoTransitionPage(child: HomePage()),
+                pageBuilder: (_, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const HalamanBeranda(),
+                ),
               ),
             ],
           ),
@@ -231,8 +240,10 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: NamaRute.riwayat,
-                pageBuilder: (_, _) =>
-                    const NoTransitionPage(child: HalamanRiwayat()),
+                pageBuilder: (_, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const HalamanRiwayat(),
+                ),
               ),
             ],
           ),
@@ -240,8 +251,10 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: NamaRute.asistenAi,
-                pageBuilder: (_, _) =>
-                    const NoTransitionPage(child: HalamanAiChat()),
+                pageBuilder: (_, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const HalamanAiChat(),
+                ),
               ),
             ],
           ),
@@ -249,8 +262,10 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: NamaRute.pemberitahuan,
-                pageBuilder: (_, _) =>
-                    const NoTransitionPage(child: HalamanPemberitahuan()),
+                pageBuilder: (_, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const HalamanPemberitahuan(),
+                ),
               ),
             ],
           ),
@@ -258,8 +273,10 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: NamaRute.profil,
-                pageBuilder: (_, _) =>
-                    const NoTransitionPage(child: HalamanProfil()),
+                pageBuilder: (_, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const HalamanProfil(),
+                ),
               ),
             ],
           ),
@@ -271,27 +288,40 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
         builder: (_, _) => const HalamanLayanan(),
       ),
       GoRoute(
-        path: '${NamaRute.detailLayanan}/:kode',
+        path: NamaRute.layananAwal,
+        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
+        builder: (_, state) =>
+            HalamanAwalPermohonan(ringkasan: _ringkasanDari(state.extra)),
+      ),
+      GoRoute(
+        path: NamaRute.formulir,
+        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
+        builder: (_, state) =>
+            HalamanFormulirPermohonan(ringkasan: _ringkasanDari(state.extra)),
+      ),
+      GoRoute(
+        path: NamaRute.layananSukses,
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
         builder: (_, state) {
-          final kode = state.pathParameters['kode'] ?? '';
-          return HalamanDetailLayanan(jenis: JenisLayanan.dariKode(kode));
+          final hasil = state.extra;
+          return HalamanSuksesPermohonan(
+            hasil: hasil is HasilAjukan
+                ? hasil
+                : const HasilAjukan(
+                    id: '',
+                    nomorPermohonan: '',
+                    slugLayanan: '',
+                  ),
+          );
         },
       ),
       GoRoute(
-        path: '${NamaRute.formulir}/:kode',
+        path: '${NamaRute.detailPermohonan}/:slug/:id',
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
         builder: (_, state) {
-          final kode = state.pathParameters['kode'] ?? '';
-          return HalamanFormulirLayanan(jenis: JenisLayanan.dariKode(kode));
-        },
-      ),
-      GoRoute(
-        path: '${NamaRute.detailPermohonan}/:id',
-        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, state) {
+          final slug = state.pathParameters['slug'] ?? '';
           final id = state.pathParameters['id'] ?? '';
-          return HalamanDetailPermohonan(id: id);
+          return HalamanDetailPermohonan(kodeLayanan: slug, id: id);
         },
       ),
       GoRoute(
@@ -300,9 +330,29 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
         builder: (_, _) => const HalamanPengaturan(),
       ),
       GoRoute(
-        path: NamaRute.bantuan,
+        path: NamaRute.gantiKataSandi,
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanBantuan(),
+        builder: (_, _) => const HalamanGantiKataSandi(),
+      ),
+      GoRoute(
+        path: NamaRute.editProfil,
+        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
+        builder: (_, _) => const HalamanEditProfil(),
+      ),
+      GoRoute(
+        path: NamaRute.pengaturanPerangkatAktif,
+        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
+        builder: (_, _) => const HalamanPerangkatAktif(),
+      ),
+      GoRoute(
+        path: NamaRute.kelolaPerangkat,
+        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
+        builder: (_, state) {
+          final extra = state.extra;
+          return HalamanKelolaPerangkat(
+            perangkatAwal: extra is List<PerangkatAktif> ? extra : const [],
+          );
+        },
       ),
       GoRoute(
         path: NamaRute.panduan,
@@ -310,46 +360,45 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
         builder: (_, _) => const HalamanPanduan(),
       ),
       GoRoute(
+        path: NamaRute.bantuan,
+        parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
+        builder: (_, _) => const HalamanBantuan(),
+      ),
+      GoRoute(
         path: NamaRute.kebijakanPrivasi,
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanKebijakan(
-          jenis: JenisKebijakan.privasi,
-        ),
+        builder: (_, _) =>
+            const HalamanKebijakan(jenis: JenisKebijakan.privasi),
       ),
       GoRoute(
         path: NamaRute.kebijakanLayanan,
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanKebijakan(
-          jenis: JenisKebijakan.layanan,
-        ),
+        builder: (_, _) =>
+            const HalamanKebijakan(jenis: JenisKebijakan.layanan),
       ),
       GoRoute(
         path: NamaRute.syaratKetentuan,
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanKebijakan(
-          jenis: JenisKebijakan.syaratKetentuan,
-        ),
+        builder: (_, _) =>
+            const HalamanKebijakan(jenis: JenisKebijakan.syaratKetentuan),
       ),
       GoRoute(
         path: NamaRute.penafianSistem,
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanKebijakan(
-          jenis: JenisKebijakan.penafian,
-        ),
+        builder: (_, _) =>
+            const HalamanKebijakan(jenis: JenisKebijakan.penafian),
       ),
       GoRoute(
         path: NamaRute.kebijakanBiometrik,
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanKebijakan(
-          jenis: JenisKebijakan.biometrik,
-        ),
+        builder: (_, _) =>
+            const HalamanKebijakan(jenis: JenisKebijakan.biometrik),
       ),
       GoRoute(
         path: NamaRute.pernyataanKebenaranData,
         parentNavigatorKey: DialogAplikasi.kunciNavigatorRoot,
-        builder: (_, _) => const HalamanKebijakan(
-          jenis: JenisKebijakan.kebenaranData,
-        ),
+        builder: (_, _) =>
+            const HalamanKebijakan(jenis: JenisKebijakan.kebenaranData),
       ),
       GoRoute(
         path: NamaRute.kebijakanPrivasiSetuju,
@@ -406,8 +455,10 @@ final penyediaRuteAplikasi = Provider<GoRouter>((ref) {
 class _Pendengar extends ChangeNotifier {
   _Pendengar(Ref ref) {
     _otentikasi = ref.listen(penyediaOtentikasi, (_, _) => notifyListeners());
-    _maintenance =
-        ref.listen(statusMaintenanceProvider, (_, _) => notifyListeners());
+    _maintenance = ref.listen(
+      statusMaintenanceProvider,
+      (_, _) => notifyListeners(),
+    );
   }
 
   late final ProviderSubscription _otentikasi;
