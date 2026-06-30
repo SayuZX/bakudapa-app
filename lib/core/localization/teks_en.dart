@@ -34,12 +34,9 @@ class TeksEn extends Teks {
   @override
   String get langkahAiAnalisisLiveness => 'AI verifying liveness...';
   @override
-  String get langkahAiAnalisisSuara => 'Validating voice recording...';
-  @override
   String get langkahAiMenyelesaikan => 'Saving verification result...';
   @override
-  String get jangantutupHalamanIni =>
-      'Do not close or leave this page.';
+  String get jangantutupHalamanIni => 'Do not close or leave this page.';
   @override
   String get ulangi => 'Retry';
   @override
@@ -102,8 +99,7 @@ class TeksEn extends Teks {
   @override
   String get dataIdentitasDasar => 'Basic identity data';
   @override
-  String get pastikanDataSesuaiKtp =>
-      'Make sure your data matches your e-KTP.';
+  String get pastikanDataSesuaiKtp => 'Make sure your data matches your e-KTP.';
   @override
   String get nik => 'NIK';
   @override
@@ -183,17 +179,6 @@ class TeksEn extends Teks {
   @override
   String get aksesKameraDitolak => 'Camera Access Denied';
   @override
-  String get verifikasiSuara => 'Voice Verification';
-  @override
-  String get ucapkanKalimatBerikut => 'Say the following sentence';
-  @override
-  String get tekanTombolRekam =>
-      'Press the record button, then say the sentence below clearly.';
-  @override
-  String get rekamanTersedia => 'Recording available';
-  @override
-  String get lanjutKeReview => 'Continue to Review';
-  @override
   String get verifikasiSidikJari => 'Fingerprint Verification';
   @override
   String get masukDenganBiometrik => 'Sign in with Biometrics';
@@ -240,8 +225,13 @@ class TeksEn extends Teks {
   String get gulirSampaiAkhir =>
       'Scroll to the bottom to enable the agree button.';
   @override
-  String get verifikasiBerhasilDikirim =>
-      'Verification Successfully Submitted';
+  String get berlakuSejak => 'Effective since';
+  @override
+  String get versiLabel => 'Version';
+  @override
+  String get gagalMemuatKebijakan => 'Failed to load policy.';
+  @override
+  String get verifikasiBerhasilDikirim => 'Verification Successfully Submitted';
   @override
   String get menungguVerifikasiOperator => 'Awaiting Operator Verification';
   @override
@@ -256,6 +246,21 @@ class TeksEn extends Teks {
   String get menyiapkan => 'Preparing';
   @override
   String get aktif => 'Active';
+  @override
+  String get aktivitasLokasiJudul => 'Location for activity log';
+  @override
+  String get aktivitasLokasiSub =>
+      'Helps detect abuse when submitting applications';
+  @override
+  String get aktivitasLokasiPenjelasan =>
+      'When enabled, your approximate location is attached to some activities '
+      '(e.g. when submitting an application) solely for security, audit, and abuse '
+      'detection purposes in line with the Privacy Policy. Location is never collected '
+      'in the background and you can disable it anytime. If permission is denied, the '
+      'app keeps working normally without location.';
+  @override
+  String get aktivitasLokasiDitolak =>
+      'Location permission not granted. Enable location permission in device settings if you want to include location.';
   @override
   String get cariWajah => 'Find face';
   @override
@@ -292,8 +297,7 @@ class TeksEn extends Teks {
   @override
   String get tidakDapatMasuk => 'Unable to sign in. Please try again.';
   @override
-  String get mohonTungguSebentar =>
-      'Please wait a moment before trying again.';
+  String get mohonTungguSebentar => 'Please wait a moment before trying again.';
   @override
   String get periksaDataLogin => 'Please re-check your login details';
   @override
@@ -322,7 +326,7 @@ class TeksEn extends Teks {
   @override
   String get kodeTerkirimUlang => 'Verification code has been resent.';
   @override
-  String get tidakMenerimaSms => "Didn't receive an SMS? ";
+  String get tidakMenerimaSms => "Didn't receive an email? ";
   @override
   String get kirimKodeLewatEmail => 'Send code via email';
   @override
@@ -331,7 +335,62 @@ class TeksEn extends Teks {
   String kirimUlangDalam(int detik) => 'Resend in ${detik}s';
   @override
   String silakanPeriksaSmsKe(String tujuan) =>
-      'Check your SMS and enter the 6-digit code we sent to $tujuan';
+      'Check your email and enter the 6-digit code we sent to $tujuan';
+  @override
+  String get fiturTidakTersediaJudul => 'Feature Unavailable';
+  @override
+  String get fiturTidakTersediaSementara =>
+      'This feature is temporarily unavailable.';
+  @override
+  String get buatKredensialJudul => 'Create Username & Password';
+  @override
+  String get buatKredensialSub =>
+      'Your account is active. Set a username and password for future sign-ins.';
+  @override
+  String get usernameLabel => 'Username';
+  @override
+  String get usernamePetunjuk => 'Choose your username';
+  @override
+  String get usernamePanjang => 'Username must be 4–20 characters.';
+  @override
+  String get usernameFormat =>
+      'Use lowercase letters, numbers, dot or underscore; start with a letter or number.';
+  @override
+  String get usernameWajibHuruf => 'Username cannot be all numbers.';
+  @override
+  String get usernameMemeriksa => 'Checking availability…';
+  @override
+  String get usernameTersedia => 'Username available';
+  @override
+  String get usernameTerpakai => 'Username already taken';
+  @override
+  String get syaratMin8 => 'At least 8 characters';
+  @override
+  String get syaratHurufBesar => 'Contains an uppercase letter';
+  @override
+  String get syaratHurufKecil => 'Contains a lowercase letter';
+  @override
+  String get syaratAngka => 'Contains a number';
+  @override
+  String get simpanLanjutkan => 'Save & Continue';
+  @override
+  String get kredensialBerhasil => 'Username & password created.';
+  @override
+  String get tambahNik => 'Add NIK';
+  @override
+  String get tambahPerubahan => 'Add change';
+  @override
+  String get nilaiBaru => 'New value';
+  @override
+  String get pilihElemen => 'Select element';
+  @override
+  String get unduhFormulirPdf => 'Download PDF Form';
+  @override
+  String get gagalUnduhFormulir => 'Failed to download the form.';
+  @override
+  String get langkahPanduanJudul => 'Application Steps';
+  @override
+  String get langkahPanduanSub => 'Follow these steps to apply.';
   @override
   String get kataSandiLabel => 'Password';
   @override
@@ -352,8 +411,7 @@ class TeksEn extends Teks {
   @override
   String get gagalMengambilFoto => 'Failed to capture photo. Please try again.';
   @override
-  String get gagalMenyimpanVideoLiveness =>
-      'Failed to save liveness video.';
+  String get gagalMenyimpanVideoLiveness => 'Failed to save liveness video.';
   @override
   String get kualitasFotoBaik => 'Photo quality is good';
   @override
@@ -366,14 +424,12 @@ class TeksEn extends Teks {
   String get langkahIntroFotoWajah1Deskripsi =>
       'You will take only one still photo, not a video. Make sure the front camera is accessible.';
   @override
-  String get langkahIntroFotoWajah2Judul =>
-      'Neutral pose facing the camera';
+  String get langkahIntroFotoWajah2Judul => 'Neutral pose facing the camera';
   @override
   String get langkahIntroFotoWajah2Deskripsi =>
       'Look straight at the lens, do not smile or tilt your head. Hold still when the button is tapped.';
   @override
-  String get langkahIntroFotoWajah3Judul =>
-      'Even front-facing lighting';
+  String get langkahIntroFotoWajah3Judul => 'Even front-facing lighting';
   @override
   String get langkahIntroFotoWajah3Deskripsi =>
       'Avoid backlighting or single-side lamps that create harsh shadows on your cheeks.';
@@ -393,25 +449,22 @@ class TeksEn extends Teks {
       'A short movement-based check — not a photo — to prove your face is real.';
   @override
   String get langkahIntroLiveness1Judul =>
-      'The camera will record for ~10 seconds';
+      'The camera will record for ~5 seconds';
   @override
   String get langkahIntroLiveness1Deskripsi =>
       'Unlike the photo step, this uses a short video to read your facial movements.';
   @override
-  String get langkahIntroLiveness2Judul =>
-      'Keep your face inside the circle';
+  String get langkahIntroLiveness2Judul => 'Keep your face inside the circle';
   @override
   String get langkahIntroLiveness2Deskripsi =>
       'While recording, your face must stay inside the guide circle even when you turn or nod.';
   @override
-  String get langkahIntroLiveness3Judul =>
-      'Follow three random movement prompts';
+  String get langkahIntroLiveness3Judul => 'Follow one random movement prompt';
   @override
   String get langkahIntroLiveness3Deskripsi =>
-      'The system will ask you to turn, nod, or look at center. Each prompt has a few-second limit.';
+      'The system will ask for one random gesture (e.g. blink, smile, or turn) with a few-second limit.';
   @override
-  String get langkahIntroLiveness4Judul =>
-      'To prevent identity spoofing';
+  String get langkahIntroLiveness4Judul => 'To prevent identity spoofing';
   @override
   String get langkahIntroLiveness4Deskripsi =>
       'The recording proves you are a real person, not a photo or screen replay. Not saved to your device gallery.';
@@ -462,6 +515,9 @@ class TeksEn extends Teks {
   @override
   String get bersiapMengambilFoto => 'Getting ready to take the photo';
   @override
+  String get lanjutkanSetelahVerifikasiWajah =>
+      'Continue to finish verification.';
+  @override
   String get instruksiUmumLiveness => 'Perform the gesture as instructed.';
   @override
   String get tahanStabil => 'Hold steady';
@@ -479,11 +535,6 @@ class TeksEn extends Teks {
   @override
   String get gerakanTerdeteksiLanjut =>
       'Gesture detected. Moving to the next instruction.';
-  @override
-  String get lanjutkanKeVerifikasiSuara =>
-      'Continue to voice verification to complete registration.';
-  @override
-  String sedangMerekamDetik(int detik) => 'Recording · ${detik}s';
   @override
   String get arahkanWajahDanIkutiInstruksi =>
       'Center your face and follow the on-screen instructions.';
@@ -524,8 +575,7 @@ class TeksEn extends Teks {
   String get panduan3 =>
       'Hold the phone steady. Clean the camera lens if needed.';
   @override
-  String get panduan4 =>
-      'Remove masks, dark glasses, or other face coverings.';
+  String get panduan4 => 'Remove masks, dark glasses, or other face coverings.';
   @override
   String get percobaanHabis => 'Attempts exhausted';
   @override
@@ -580,15 +630,7 @@ class TeksEn extends Teks {
   @override
   String get izinMikrofonBelumDiberikan => 'Microphone permission not granted.';
   @override
-  String get gagalMemulaiPerekamanSuara => 'Failed to start voice recording.';
-  @override
-  String get rekamanBelumTerdengarJelas =>
-      'The recording was not clear enough. Please try again in a quieter place.';
-  @override
   String get kodeVerifikasi => 'VERIFICATION CODE';
-  @override
-  String get rekamSuaraMinimal =>
-      'Record at least 8 seconds. Do not cover the microphone with your hand.';
   @override
   String get tinjauDataPeriksa =>
       'Review carefully before proceeding to the policy agreement.';
@@ -602,8 +644,6 @@ class TeksEn extends Teks {
   String get fotoWajahLabel => 'Face photo';
   @override
   String get videoLiveness => 'Liveness video';
-  @override
-  String get rekamanSuara => 'Voice recording';
   @override
   String get sidikJariLabel => 'Fingerprint';
   @override
@@ -621,8 +661,7 @@ class TeksEn extends Teks {
   @override
   String get statusSidikPerangkatTidakDukung => 'Device not supported';
   @override
-  String get statusSidikBelumAdaDiPerangkat =>
-      'No fingerprint on this device';
+  String get statusSidikBelumAdaDiPerangkat => 'No fingerprint on this device';
   @override
   String get statusSidikDibatalkan => 'Verification cancelled by user';
   @override
@@ -649,7 +688,7 @@ class TeksEn extends Teks {
       'Disclaimer of service availability and provider responsibility.';
   @override
   String get pemrosesanDataBiometrikDeskripsi =>
-      'Consent to process face, liveness, voice, and fingerprint biometrics for verification.';
+      'Consent to process face, liveness, and fingerprint biometrics for verification.';
   @override
   String get pernyataanKebenaranDataDeskripsi =>
       'Declaration that the submitted data is correct and accountable.';
@@ -691,8 +730,7 @@ class TeksEn extends Teks {
   @override
   String get dataPribadi => 'Personal Data';
   @override
-  String get dataPribadiSub =>
-      'View your NIK, email, and contact information.';
+  String get dataPribadiSub => 'View your NIK, email, and contact information.';
   @override
   String get keamananAkun => 'Account Security';
   @override
@@ -723,7 +761,7 @@ class TeksEn extends Teks {
   @override
   String get andaTelahKeluar => 'You have signed out of the app.';
   @override
-  String get versiAplikasi => 'Version 1.0.0';
+  String get versiAplikasi => 'App Version';
   @override
   String get pengaturan => 'Settings';
   @override
@@ -954,6 +992,8 @@ class TeksEn extends Teks {
   String minimalKarakter(String label, int n) =>
       '$label must be at least $n characters.';
   @override
+  String harusJumlahDigit(String label, int n) => '$label must be $n digits.';
+  @override
   String get kolomIniLabel => 'This field';
   @override
   String get nikHarus16Digit => 'NIK must be 16 digits.';
@@ -964,8 +1004,7 @@ class TeksEn extends Teks {
   @override
   String get noKkHarus16Digit => 'Family Card Number must be 16 digits.';
   @override
-  String get noKkHanyaAngka =>
-      'Family Card Number must contain digits only.';
+  String get noKkHanyaAngka => 'Family Card Number must contain digits only.';
   @override
   String get formatEmailTidakValid => 'Invalid email format.';
   @override
@@ -1046,6 +1085,19 @@ class TeksEn extends Teks {
   @override
   String get keluarAplikasiLabel => 'Exit App';
   @override
+  String get maintenanceCobaSekarang => 'Try Now';
+  @override
+  String get maintenanceSegeraKembali => 'We will be back shortly.';
+  @override
+  String get maintenanceSubPesan =>
+      'This is routine maintenance to improve service performance and security.';
+  @override
+  String get maintenanceStatusAktif => 'Under maintenance';
+  @override
+  String get maintenanceStatusMemeriksa => 'Checking status…';
+  @override
+  String maintenanceTerakhirDiperiksa(String jam) => 'Last checked $jam';
+  @override
   String get bahasaApaYangInginDigunakan =>
       'Which language would you like to use?';
   @override
@@ -1059,6 +1111,9 @@ class TeksEn extends Teks {
   @override
   String get bahasaBerhasilDiubah => 'Language changed successfully.';
   @override
+  String get vpnAktifInformasi =>
+      'A VPN is active. Your activity is still logged to protect your data.';
+  @override
   String get asistenAi => 'AI Assistant';
   @override
   String get sapaanAi =>
@@ -1069,6 +1124,28 @@ class TeksEn extends Teks {
   String get lanjutkanAi => 'Continue';
   @override
   String get mulaiSesiBaru => 'Start new session';
+  @override
+  String sapaanWaktu(int jam, String? nama) {
+    final sapa = jam < 11
+        ? 'Good morning'
+        : jam < 18
+        ? 'Good afternoon'
+        : 'Good evening';
+    return nama == null || nama.isEmpty ? sapa : '$sapa, $nama';
+  }
+
+  @override
+  String get salinPesan => 'Copy';
+  @override
+  String get disalin => 'Copied to clipboard';
+  @override
+  String get regenerasi => 'Regenerate';
+  @override
+  String get hentikan => 'Stop';
+  @override
+  String cobaLagiDalam(int detik) => 'Try again in ${detik}s';
+  @override
+  String get keBalasanTerbaru => 'To latest message';
   @override
   String get menyimpanIdentitas =>
       'Saving your identity data. Please do not close the app.';
@@ -1089,9 +1166,6 @@ class TeksEn extends Teks {
   String get mengunggahLiveness =>
       'Uploading face verification data. Please do not close the app.';
   @override
-  String get mengunggahSuara =>
-      'Uploading your voice recording. Please do not close the app.';
-  @override
   String get mengirimSidikJari => 'Submitting your fingerprint verification.';
   @override
   String get memverifikasiAkun => 'Verifying your account.';
@@ -1111,6 +1185,8 @@ class TeksEn extends Teks {
   String get instansiSingkat => 'Disdukcapil North Maluku';
   @override
   String get akunTerverifikasi => 'Verified';
+  @override
+  String get belumTerverifikasi => 'Not verified';
   @override
   String get akunBelumTerverifikasi => 'Not Verified';
   @override
@@ -1142,6 +1218,15 @@ class TeksEn extends Teks {
   String get saranPindahDomisili => 'How do I change my domicile?';
   @override
   String get asistenMengetik => 'Assistant is typing…';
+  @override
+  String haloSapaan(String nama) => 'Hi, $nama';
+  @override
+  String get haloSapaanRingkas => 'Hi';
+  @override
+  String get butuhBantuanOperator =>
+      'Need more help? Contact a Disdukcapil officer.';
+  @override
+  String get galatAiUmum => 'Sorry, something went wrong. Please try again.';
   @override
   String get menyiapkanKamera => 'Preparing camera…';
   @override
@@ -1199,19 +1284,690 @@ class TeksEn extends Teks {
   @override
   String get simpanKataSandiBaru => 'Save New Password';
   @override
-  String get tantanganSuaraKosongJudul => 'Verification sentence not available';
-  @override
-  String get tantanganSuaraKosongPesan =>
-      'Voice challenge sentences have not been set up by the operator yet. Please contact Disdukcapil Provinsi Maluku Utara to continue registration.';
-  @override
-  String get tantanganSuaraGagalMuat =>
-      'Failed to load verification sentence. Please try again.';
-  @override
-  String get tantanganSuaraBelumDimuat =>
-      'Sentence not loaded yet. Please wait or try again.';
-  @override
-  String get rekamanBelumCocokKalimat =>
-      'Your recording does not appear to match the sentence above. Please repeat and speak the full sentence.';
-  @override
   String get hubungiDisdukcapilCta => 'Contact Disdukcapil';
+
+  static const Map<String, String> _petaKatalog = {
+    'Akta Kelahiran': 'Birth Certificate',
+    'Akta Kelahiran (Tanpa NIK)': 'Birth Certificate (Without NIK)',
+    'Akta Lahir': 'Birth Cert.',
+    'Akta Kematian': 'Death Certificate',
+    'KK — Tambah Anak': 'Family Card — Add Child',
+    'KK Tambah Anak': 'FC Add Child',
+    'KK — Cetak Ulang': 'Family Card — Reprint',
+    'KK Cetak Ulang': 'FC Reprint',
+    'KK — Perubahan Biodata': 'Family Card — Data Change',
+    'KK Ubah Biodata': 'FC Data Change',
+    'KIA (Kartu Identitas Anak)': 'KIA (Child Identity Card)',
+    'KIA': 'KIA',
+    'Pencatatan kelahiran dan penerbitan akta untuk anak yang sudah memiliki NIK.':
+        'Birth registration and certificate issuance for a child who already has a NIK.',
+    'Permohonan akta kelahiran untuk anak yang belum memiliki NIK.':
+        'Birth certificate application for a child without a NIK yet.',
+    'Pelaporan kematian dan penerbitan akta kematian.':
+        'Death reporting and death certificate issuance.',
+    'Penambahan anggota keluarga (anak) dalam Kartu Keluarga.':
+        'Adding a family member (child) to the Family Card.',
+    'Pencetakan ulang Kartu Keluarga yang rusak atau hilang.':
+        'Reprinting a damaged or lost Family Card.',
+    'Perubahan elemen data pada Kartu Keluarga.':
+        'Changing data elements on the Family Card.',
+    'Penerbitan Kartu Identitas Anak untuk usia 0–17 tahun.':
+        'Issuance of the Child Identity Card for ages 0–17.',
+    'Menunggu': 'Pending',
+    'Diverifikasi': 'Verified',
+    'Diproses': 'Processing',
+    'Menunggu SIAK': 'Awaiting SIAK',
+    'Tertunda': 'On Hold',
+    'Perlu Perbaikan': 'Needs Revision',
+    'Ditolak': 'Rejected',
+    'Selesai': 'Completed',
+    'Dibatalkan': 'Cancelled',
+    'Data Anak': 'Child Information',
+    'Data Orang Tua': 'Parents Information',
+    'Data Saksi': 'Witness Information',
+    'Catatan': 'Notes',
+    'Data Almarhum/ah': 'Deceased Information',
+    'Data Orang Tua Almarhum/ah': "Deceased's Parents",
+    'Data Kematian': 'Death Information',
+    'Data Kartu Keluarga': 'Family Card Information',
+    'Data Anggota Keluarga': 'Family Member Information',
+    'Detail Perubahan': 'Change Details',
+    'Nama Lengkap Anak': "Child's Full Name",
+    'NIK Anak (jika sudah ada)': "Child's NIK (if available)",
+    'NIK Anak': "Child's NIK",
+    'Jenis Kelamin': 'Gender',
+    'Tanggal Lahir': 'Date of Birth',
+    'Tempat Lahir': 'Place of Birth',
+    'Anak Ke-': 'Birth Order',
+    'Tempat Dilahirkan (RS/Puskesmas/Rumah)':
+        'Place of Delivery (Hospital/Clinic/Home)',
+    'Tempat Dilahirkan': 'Place of Delivery',
+    'Jam Lahir': 'Time of Birth',
+    'Jenis Kelahiran': 'Type of Birth',
+    'Berat Bayi (kg)': 'Birth Weight (kg)',
+    'Panjang Bayi (cm)': 'Birth Length (cm)',
+    'Penolong Kelahiran': 'Birth Attendant',
+    'NIK Ayah': "Father's NIK",
+    'Nama Lengkap Ayah': "Father's Full Name",
+    'Pekerjaan Ayah': "Father's Occupation",
+    'NIK Ibu': "Mother's NIK",
+    'Nama Lengkap Ibu': "Mother's Full Name",
+    'Pekerjaan Ibu': "Mother's Occupation",
+    'NIK Saksi 1': "Witness 1's NIK",
+    'Nama Saksi 1': "Witness 1's Name",
+    'NIK Saksi 2': "Witness 2's NIK",
+    'Nama Saksi 2': "Witness 2's Name",
+    'Catatan Tambahan': 'Additional Notes',
+    'NIK Almarhum/ah': "Deceased's NIK",
+    'Nama Lengkap': 'Full Name',
+    'Tanggal Meninggal': 'Date of Death',
+    'Jam Meninggal': 'Time of Death',
+    'Tempat Meninggal': 'Place of Death',
+    'Penyebab Kematian': 'Cause of Death',
+    'Yang Menerangkan': 'Certified By',
+    'Nama Ayah': "Father's Name",
+    'Nama Ibu': "Mother's Name",
+    'Nomor KK': 'Family Card Number',
+    'Nama Kepala Keluarga': 'Head of Family Name',
+    'Alamat Kepala Keluarga': 'Head of Family Address',
+    'Alasan Cetak Ulang': 'Reprint Reason',
+    'NIK Anggota': "Member's NIK",
+    'Nama Anggota': "Member's Name",
+    'Data Biodata yang Diubah': 'Data Elements to Change',
+    'Alasan / Keterangan Perubahan': 'Reason / Change Description',
+    '16 digit': '16 digits',
+    '16 digit NIK': '16-digit NIK',
+    '16 digit nomor KK': '16-digit Family Card number',
+    'contoh: 1': 'e.g. 1',
+    'contoh: 3.2': 'e.g. 3.2',
+    'contoh: 48.5': 'e.g. 48.5',
+    'Alamat sesuai KK': 'Address as on the Family Card',
+    'Sesuai dokumen kependudukan': 'As stated on civil documents',
+    'Kota/Kabupaten kelahiran': 'City/Regency of birth',
+    'Sesuai dokumen pendukung': 'As stated on supporting documents',
+    'Surat Keterangan Kelahiran': 'Birth Statement Letter',
+    'Kartu Keluarga (KK)': 'Family Card (KK)',
+    'Buku Nikah / Akta Perkawinan': 'Marriage Book / Certificate',
+    'KTP Saksi 1': "Witness 1's ID Card",
+    'KTP Saksi 2': "Witness 2's ID Card",
+    'Dokumen Pendukung Lainnya': 'Other Supporting Document',
+    'Dokumen Pendukung Lainnya 1 (opsional)':
+        'Other Supporting Document 1 (optional)',
+    'Dokumen Pendukung Lainnya 2 (opsional)':
+        'Other Supporting Document 2 (optional)',
+    'Dokumen Pendukung Lainnya 3 (opsional)':
+        'Other Supporting Document 3 (optional)',
+    'Surat Keterangan Kematian': 'Death Statement Letter',
+    'KTP Almarhum/ah': "Deceased's ID Card",
+    'KTP Pelapor': "Reporter's ID Card",
+    'Akta Kelahiran Anak': "Child's Birth Certificate",
+    'KTP Orang Tua': "Parents' ID Card",
+    'KTP Orang Tua / Wali': "Parent/Guardian's ID Card",
+    'Pas Foto Anak 3x4': "Child's 3x4 Photo",
+    'KK Lama (jika ada)': 'Old Family Card (if any)',
+    'KTP Kepala Keluarga': "Head of Family's ID Card",
+    'Surat Kehilangan dari Kepolisian': 'Police Loss Report',
+    'Kartu Keluarga (KK) Lama': 'Old Family Card (KK)',
+    'KTP Pemohon': "Applicant's ID Card",
+    'Dokumen Pendukung Perubahan': 'Supporting Document for the Change',
+    'Dokumen Lainnya': 'Other Document',
+    'Laki-laki': 'Male',
+    'Perempuan': 'Female',
+    'Tunggal': 'Single',
+    'Kembar 2': 'Twins',
+    'Kembar 3': 'Triplets',
+    'Kembar 4': 'Quadruplets',
+    'Lainnya': 'Other',
+    'Dokter': 'Doctor',
+    'Bidan / Perawat': 'Midwife / Nurse',
+    'Dukun': 'Traditional attendant',
+    'Hilang': 'Lost',
+    'Rusak': 'Damaged',
+    'Perubahan Data Identitas (Nama, Tempat/Tanggal Lahir, NIK, dll)':
+        'Identity Data Change (Name, Place/Date of Birth, NIK, etc.)',
+    'Perubahan Status Perkawinan (Kawin / Cerai Hidup / Cerai Mati)':
+        'Marital Status Change (Married / Divorced / Widowed)',
+    'Penambahan Anggota Keluarga (Kelahiran / Datang)':
+        'Family Member Addition (Birth / Arrival)',
+    'Pengurangan Anggota Keluarga (Kematian / Pindah Keluar)':
+        'Family Member Removal (Death / Move Out)',
+    'Perubahan Alamat': 'Address Change',
+    'Perubahan Pendidikan': 'Education Change',
+    'Perubahan Pekerjaan': 'Occupation Change',
+    'Perubahan Agama': 'Religion Change',
+    'Perubahan Kewarganegaraan': 'Citizenship Change',
+    'Perubahan Nama Kepala Keluarga': 'Head of Family Name Change',
+    'Pemekaran / Pecah Kartu Keluarga': 'Family Card Split',
+    'Penggabungan Kartu Keluarga': 'Family Card Merge',
+    'Kesalahan Penulisan Data (Typo dari sistem sebelumnya)':
+        'Data Typo (from previous system)',
+    'Pembaruan Format KK (Dari lama ke format terbaru)':
+        'Family Card Format Update (old to latest format)',
+    'KK Tidak Terbaca / Rusak Secara Sistem (QR / Barcode bermasalah)':
+        'Unreadable / System-damaged Card (QR/Barcode issue)',
+    'Perubahan Hubungan Dalam Keluarga': 'Family Relationship Change',
+    'Penyesuaian Data dengan Instansi Lain (BPJS, Bank, dll)':
+        'Data Alignment with Other Institutions (BPJS, Bank, etc.)',
+    'Permintaan Khusus / Lainnya': 'Special Request / Other',
+    'Golongan Darah': 'Blood Type',
+    'Tidak Tahu': 'Unknown',
+    'Agama': 'Religion',
+    'Islam': 'Islam',
+    'Kristen': 'Christianity',
+    'Katholik': 'Catholicism',
+    'Hindu': 'Hinduism',
+    'Budha': 'Buddhism',
+    'Konghucu': 'Confucianism',
+    'Kepercayaan terhadap Tuhan YME': 'Native Faith',
+    'Pendidikan': 'Education',
+    'Tidak / Belum Sekolah': 'No Schooling Yet',
+    'Belum Tamat SD / Sederajat': 'Did Not Finish Elementary',
+    'Tamat SD / Sederajat': 'Elementary Graduate',
+    'SLTP / Sederajat': 'Junior High Graduate',
+    'SLTA / Sederajat': 'Senior High Graduate',
+    'Diploma I / II': 'Diploma I / II',
+    'Akademi / Diploma III / Sarjana Muda': 'Academy / Diploma III',
+    'Diploma IV / Strata I': 'Diploma IV / Bachelor',
+    'Strata II': 'Master',
+    'Strata III': 'Doctorate',
+    'Pekerjaan': 'Occupation',
+    'Status Perkawinan': 'Marital Status',
+    'Belum Kawin': 'Single',
+    'Kawin Tercatat': 'Married (Registered)',
+    'Kawin Belum Tercatat': 'Married (Unregistered)',
+    'Cerai Hidup Tercatat': 'Divorced (Registered)',
+    'Cerai Hidup Belum Tercatat': 'Divorced (Unregistered)',
+    'Cerai Mati Tercatat': 'Widowed (Registered)',
+    'Cerai Mati Belum Tercatat': 'Widowed (Unregistered)',
+    'Surat keterangan kelahiran dari dokter/bidan/penolong kelahiran':
+        'Birth statement from a doctor/midwife/birth attendant',
+    'Berkas Kartu Keluarga (KK)': 'Family Card (KK) document',
+    'Berkas KTP-el Ayah dan Ibu': "Father's and mother's e-ID cards",
+    'Berkas Buku Nikah / Akta Perkawinan orang tua':
+        "Parents' marriage book / certificate",
+    'Berkas KTP-el 2 (dua) orang saksi': 'e-ID cards of two witnesses',
+    'Surat kuasa bermaterai (jika dikuasakan)':
+        'Stamped power of attorney (if represented)',
+    'Berkas Kartu Keluarga (KK) orang tua': "Parents' Family Card (KK)",
+    'Surat keterangan kematian dari dokter/rumah sakit/lurah/kepala desa':
+        'Death statement from a doctor/hospital/village head',
+    'Berkas KK yang memuat data almarhum/almarhumah':
+        'Family Card listing the deceased',
+    'Berkas KTP-el almarhum/almarhumah': "Deceased's e-ID card",
+    'Berkas KTP-el pelapor': "Reporter's e-ID card",
+    'Berkas Kartu Keluarga (KK) asli': 'Original Family Card (KK)',
+    'Berkas Akta Kelahiran anak': "Child's birth certificate",
+    'Berkas KTP-el kedua orang tua': "Both parents' e-ID cards",
+    'Berkas KK lama (jika masih ada)': 'Old Family Card (if available)',
+    'Berkas KTP-el kepala keluarga': "Head of family's e-ID card",
+    'Surat keterangan kehilangan dari kepolisian (jika hilang)':
+        'Police loss report (if lost)',
+    'Berkas Kartu Keluarga (KK) lama': 'Old Family Card (KK)',
+    'Berkas KTP-el pemohon': "Applicant's e-ID card",
+    'Dokumen pendukung perubahan (akta, ijazah, surat keterangan, dll)':
+        'Supporting documents for the change (certificates, diplomas, letters, etc.)',
+    'Berkas KTP-el orang tua / wali': "Parent/guardian's e-ID card",
+    'Pas foto anak ukuran 3x4 (2 lembar, latar merah)':
+        "Child's 3x4 photos (2 copies, red background)",
+    'Data Permohonan': 'Application Data',
+    'Dokumen Hasil': 'Result Document',
+  };
+
+  @override
+  String katalog(String bawaan) => _petaKatalog[bawaan] ?? bawaan;
+  @override
+  List<String> daftarKatalog(List<String> bawaan) =>
+      bawaan.map(katalog).toList();
+
+  @override
+  String? pesanKesalahan(String? kode) {
+    switch (kode) {
+      case 'JARINGAN':
+        return 'Please check your internet connection.';
+      case 'BATAS_WAKTU':
+        return 'The request took too long. Please try again.';
+      case 'TIDAK_BERWENANG':
+      case 'UNAUTHORIZED':
+        return 'Your session has expired. Please sign in again.';
+      case 'DILARANG':
+      case 'FORBIDDEN':
+        return 'You do not have access to this action.';
+      case 'TIDAK_DITEMUKAN':
+      case 'NOT_FOUND':
+        return 'Data not found.';
+      case 'BATAS_FREKUENSI':
+      case 'RATE_LIMITED':
+        return 'Too many attempts. Please try again later.';
+      case 'SERVER':
+      case 'INTERNAL_SERVER_ERROR':
+        return 'The service is having issues. Please try again.';
+      case 'SIMPANAN':
+        return 'Failed to access secure storage.';
+      case 'MAINTENANCE_MODE':
+        return 'The service is under maintenance.';
+      case 'INVALID_CREDENTIALS':
+        return 'Incorrect ID or password.';
+      case 'ACCOUNT_BLOCKED':
+        return 'Account temporarily locked. Contact support.';
+      case 'CONFLICT':
+      case 'DUPLICATE_RECORD':
+        return 'Data is already registered.';
+      case 'AI_UNAVAILABLE':
+        return 'The AI assistant is currently unavailable.';
+      case 'AI_ERROR':
+        return 'The AI service is disrupted.';
+      case 'VISION_ERROR':
+        return 'Image analysis failed. Please try again later.';
+      case 'FACE_SERVICE_ERROR':
+        return 'The face verification service is having issues.';
+      case 'FACE_PHOTO_BLOCKED':
+        return 'Face photo attempts exhausted. Visit the Disdukcapil counter for in-person verification.';
+      case 'RESOURCE_EMPTY':
+        return 'Data is not available yet.';
+      case 'TAK_DIKENAL':
+        return 'An unexpected error occurred.';
+      default:
+        return null;
+    }
+  }
+
+  @override
+  String get sesiBerakhirJudul => 'Session Ended';
+  @override
+  String get sesiBerakhirPesan =>
+      'Your session has ended to keep your account secure. Please sign in again to continue.';
+  @override
+  String get wargaMalut => 'North Maluku Resident';
+  @override
+  String get permohonanAnda => 'Your Applications';
+  @override
+  String get totalPermohonanAktif => 'total active & completed applications';
+  @override
+  String get labelMenunggu => 'Pending';
+  @override
+  String get labelDiproses => 'Processing';
+  @override
+  String get labelSelesai => 'Completed';
+  @override
+  String get layananKependudukan => 'Civil Registry Services';
+  @override
+  String get semua => 'All';
+  @override
+  String get permohonanTerakhir => 'Recent Applications';
+  @override
+  String get berandaGagalMuat => "Couldn't load applications. Pull to refresh.";
+  @override
+  String get berandaKosong =>
+      'No applications yet. Submit your first civil registry application.';
+  @override
+  String get pilihJalurPermohonan =>
+      "Choose the application track based on the child's condition.";
+  @override
+  String get jalurPunyaNik => 'Child already has a NIK';
+  @override
+  String get jalurPunyaNikSub =>
+      "The child's NIK is registered on the Family Card.";
+  @override
+  String get jalurTanpaNik => 'Child does not have a NIK yet';
+  @override
+  String get jalurTanpaNikSub =>
+      'A NIK will be issued during the registration process.';
+  @override
+  String get ajukanPermohonanBaru => 'Submit a new application';
+  @override
+  String get filterBerjalan => 'In Progress';
+  @override
+  String get filterPerluTindakan => 'Action Needed';
+  @override
+  String get filterBerakhir => 'Rejected/Cancelled';
+  @override
+  String get riwayatKosongJudul => 'No Applications Yet';
+  @override
+  String get riwayatKosongPesan =>
+      'Submit your first civil registry application from the Services menu.';
+  @override
+  String get tidakAdaData => 'No Data';
+  @override
+  String tanpaStatus(String label) =>
+      'No applications with status ${label.toLowerCase()}.';
+  @override
+  String get gagalMuatRiwayat => "Couldn't load application history.";
+  @override
+  String get memuatRiwayat => 'Loading application history…';
+  @override
+  String get layananPermohonan => 'Application Services';
+  @override
+  String get kelompokPencatatanSipil => 'Civil Registration';
+  @override
+  String get kelompokKartuKeluarga => 'Family Card';
+  @override
+  String get kelompokIdentitasAnak => 'Child Identity';
+  @override
+  String get formulirResmi => 'Official Forms';
+  @override
+  String get formulirResmiSub => 'View or download the forms to review.';
+  @override
+  String get persyaratanDokumen => 'Document Requirements';
+  @override
+  String get persyaratanDokumenSub =>
+      'Prepare the following documents before starting.';
+  @override
+  String estimasiPengisian(int menit) => 'Estimated time ±$menit minutes';
+  @override
+  String get persetujuanPermohonan =>
+      'I declare that the data I will provide is true, and I agree to the applicable terms of service and privacy policy.';
+  @override
+  String get ketentuanLayananTaut => 'Terms of Service';
+  @override
+  String get mulaiPermohonan => 'Start Application';
+  @override
+  String get dokumenBelumTersedia =>
+      'Document is not yet available on the server.';
+  @override
+  String get belumTersediaServer => 'Not yet available on the server';
+  @override
+  String get takAdaPembukaPdf => 'No PDF viewer app found on this device.';
+  @override
+  String get gagalUnduhDokumen => 'Failed to download the document.';
+  @override
+  String get unggahDokumenLangkah => 'Upload Documents';
+  @override
+  String get ringkasanLangkah => 'Summary';
+  @override
+  String get periksaIsian => 'Please review the highlighted fields.';
+  @override
+  String get mengirimPermohonan => 'Submitting Application';
+  @override
+  String get mengunggahDokumenPesan =>
+      'Please wait, your documents are being uploaded.';
+  @override
+  String get permohonanGagalKirim => 'Submission Failed';
+  @override
+  String get dataBelumValid => 'Invalid Data';
+  @override
+  String get batalkanPengisianJudul => 'Discard This Form?';
+  @override
+  String get batalkanPengisianPesan => 'The data you entered will be lost.';
+  @override
+  String get yaKeluar => 'Yes, leave';
+  @override
+  String get lanjutMengisi => 'Keep editing';
+  @override
+  String get permohonanDiproses => 'Submission is in progress. Please wait.';
+  @override
+  String get infoUnggahDokumen =>
+      'Make sure documents are clearly readable. JPG, PNG, or PDF format with a maximum of 5MB per file.';
+  @override
+  String get periksaSebelumKirim => 'Review before submitting';
+  @override
+  String get periksaSebelumKirimSub =>
+      'Submitted applications will be verified by Disdukcapil officers.';
+  @override
+  String get dokumenTerunggah => 'Uploaded Documents';
+  @override
+  String get belumDiunggah => 'Not uploaded';
+  @override
+  String get angkaTidakValid => 'Enter a valid number.';
+  @override
+  String minimalNilai(String nilai) => 'Minimum $nilai.';
+  @override
+  String maksimalNilai(String nilai) => 'Maximum $nilai.';
+  @override
+  String pilihLabel(String label) => 'Select $label';
+  @override
+  String get biodataWajibLengkap =>
+      'Select the data to change and fill in both old and new values.';
+  @override
+  String get ketukUnggahFormat => 'Tap to upload · JPG, PNG, PDF (max 5MB)';
+  @override
+  String get ambilFotoKamera => 'Take a photo with the camera';
+  @override
+  String get pilihDariGaleri => 'Choose from gallery';
+  @override
+  String get pilihBerkasPdf => 'Pick a file (PDF)';
+  @override
+  String get gagalPilihBerkas => 'Failed to pick the file. Try again.';
+  @override
+  String get elemenDataDiubah => 'Data Elements to Change';
+  @override
+  String get pilihDataDiubah => 'Select data to change';
+  @override
+  String get tambahDataLain => 'Add another item';
+  @override
+  String get pilihElemenData => 'Select Data Element';
+  @override
+  String get pilihMinimalSatuBiodata => 'Select the data you want to change...';
+  @override
+  String get nilaiLamaLabel => 'Old value (as on the current Family Card)';
+  @override
+  String get nilaiBaruLabel => 'New value (desired)';
+  @override
+  String get permohonanTerkirim => 'Application Submitted';
+  @override
+  String suksesPermohonanSub(String layanan) =>
+      'Your $layanan has been received and will be verified by Disdukcapil officers.';
+  @override
+  String get nomorPermohonan => 'Application Number';
+  @override
+  String get ketukSalinBukti => 'Tap to copy · keep it as proof of submission';
+  @override
+  String get nomorDisalin => 'Application number copied.';
+  @override
+  String get lihatRiwayatPermohonan => 'View Application History';
+  @override
+  String get kembaliKeBeranda => 'Back to Home';
+  @override
+  String get memuatDetail => 'Loading application details…';
+  @override
+  String get gagalMuatDetail => "Couldn't load the details.";
+  @override
+  String get mengunduhDokumen => 'Downloading Document';
+  @override
+  String get batalkanPermohonanJudul => 'Cancel Application?';
+  @override
+  String get batalkanPermohonanPesan =>
+      'A cancelled application cannot be reactivated. You will need to submit a new one.';
+  @override
+  String get yaBatalkan => 'Yes, cancel';
+  @override
+  String get permohonanDibatalkan => 'Application cancelled successfully.';
+  @override
+  String get gagalBatalkan => 'Failed to cancel the application.';
+  @override
+  String get unduhTandaTerima => 'Download Receipt (PDF)';
+  @override
+  String get unduhDokumenFinal => 'Download Final Document';
+  @override
+  String get batalkanPermohonanAksi => 'Cancel Application';
+  @override
+  String get pembaruanTerakhir => 'Last Updated';
+  @override
+  String get pemohon => 'Applicant';
+  @override
+  String get catatanPetugas => 'Officer Notes';
+  @override
+  String get dataPermohonan => 'Application Data';
+  @override
+  String get memuatNotifikasi => 'Loading notifications…';
+  @override
+  String get gagalMuatNotifikasi => "Couldn't load notifications.";
+  @override
+  String get notifKosongJudul => 'No Notifications';
+  @override
+  String get notifKosongPesan =>
+      'Updates about your applications will appear here.';
+  @override
+  String get filterSemua => 'All';
+  @override
+  String get filterBelumDibaca => 'Unread';
+  @override
+  String get kategoriStatus => 'Status';
+  @override
+  String get kategoriTindakan => 'Action';
+  @override
+  String get kategoriInfo => 'Info';
+  @override
+  String get kategoriSistem => 'System';
+  @override
+  String get pengaturanSub => 'Security, notifications, language';
+  @override
+  String get panduanLayananSub => 'How to submit an application';
+  @override
+  String get pusatBantuanSub => 'FAQ and Disdukcapil contacts';
+  @override
+  String get seksiAkun => 'Account';
+  @override
+  String get seksiKeamanan => 'Security';
+  @override
+  String get seksiPreferensi => 'Preferences';
+  @override
+  String get seksiTentang => 'About';
+  @override
+  String get gantiKataSandiJudul => 'Change Password';
+  @override
+  String get gantiKataSandiSub => 'Update your account password';
+  @override
+  String get keluarAkun => 'Sign Out';
+  @override
+  String get keluarAkunJudul => 'Sign Out?';
+  @override
+  String get keluarAkunPesan =>
+      'You will need to sign in again to access services.';
+  @override
+  String get nikTidakDapatDiubah => 'NIK cannot be changed.';
+  @override
+  String get alamatDomisili => 'Residential Address';
+  @override
+  String get simpanPerubahan => 'Save Changes';
+  @override
+  String get menyimpanProfil => 'Saving Profile';
+  @override
+  String get profilDiperbarui => 'Profile updated successfully.';
+  @override
+  String get gagalSimpanProfil => 'Failed to save the profile.';
+  @override
+  String get infoUbahIdentitas =>
+      'Official identity data (NIK, date of birth) can only be changed through the Family Card Data Change service.';
+  @override
+  String get gantiSandiInfo =>
+      'Use a strong password: at least 8 characters with uppercase letters and numbers.';
+  @override
+  String get kataSandiSaatIni => 'Current Password';
+  @override
+  String get menyimpanKataSandi => 'Saving Password';
+  @override
+  String get gagalUbahSandi => 'Failed to update the password.';
+  @override
+  String get permintaanDiproses => 'Request is in progress.';
+  @override
+  String get baruSaja => 'Just now';
+  @override
+  String menitLalu(int n) => '$n minutes ago';
+  @override
+  String jamLalu(int n) => '$n hours ago';
+  @override
+  String hariLalu(int n) => '$n days ago';
+  @override
+  String get perangkatAktif => 'Active Devices';
+  @override
+  String get kelolaPerangkat => 'Manage Devices';
+  @override
+  String get logoutPerangkat => 'Logout Device';
+  @override
+  String get batasPerangkatJudul => 'Device Limit Reached';
+  @override
+  String get batasPerangkatPesan =>
+      'This account is already active on 2 devices. Log out one device to continue.';
+  @override
+  String get perangkatIni => 'This device';
+  @override
+  String get perangkatTidakDikenal => 'Unknown device';
+  @override
+  String get terakhirAktif => 'Last active';
+  @override
+  String get logoutPerangkatKonfirmasiJudul => 'Logout Device?';
+  @override
+  String get logoutPerangkatKonfirmasiPesan =>
+      'This device will be removed from your account.';
+  @override
+  String get lanjutKeBeranda => 'Continue to Home';
+  @override
+  String get perangkatBerhasilDilogout => 'Device removed successfully.';
+  @override
+  String get gagalLogoutPerangkat => 'Failed to remove the device. Try again.';
+  @override
+  String get memuatPerangkat => 'Loading devices';
+  @override
+  String get tidakAdaPerangkatLain => 'No other devices';
+  @override
+  String get tidakAdaPerangkatLainPesan =>
+      'Only this device is active on your account.';
+  @override
+  String get tabPerangkatAktif => 'Active';
+  @override
+  String get tabRiwayatPerangkat => 'History';
+  @override
+  String get riwayatPerangkat => 'Device History';
+  @override
+  String get riwayatPerangkatKosong => 'No device history yet.';
+  @override
+  String get statusPerangkatAktif => 'Active';
+  @override
+  String get statusPerangkatDicabut => 'Revoked';
+  @override
+  String get statusPerangkatKedaluwarsa => 'Expired';
+  @override
+  String get masukPada => 'Signed in';
+  @override
+  String get keluarkanPerangkatJudul => 'Remove a Device';
+  @override
+  String get keluarkanPerangkatPesan =>
+      'Your account has reached its device limit. Choose one device to remove so you can sign in.';
+  @override
+  String get keluarkanDanMasuk => 'Remove & Sign In';
+  @override
+  String get pilihPerangkatDahulu => 'Select a device first.';
+  @override
+  String get kataSandiSalah => 'Incorrect password.';
+  @override
+  String get perangkatTidakValidRefresh =>
+      'The selected device is invalid. The list has been refreshed.';
+  @override
+  String get perangkatSudahKeluarPilihUlang =>
+      'That device has already signed out. Please choose again.';
+  @override
+  String get kabupatenKota => 'Regency/City';
+  @override
+  String get kecamatan => 'District';
+  @override
+  String get desaKelurahan => 'Village/Subdistrict';
+  @override
+  String get pilihKabupaten => 'Select Regency/City';
+  @override
+  String get pilihKecamatan => 'Select District';
+  @override
+  String get pilihDesa => 'Select Village/Subdistrict';
+  @override
+  String get pilihKabupatenDahulu => 'Select a regency/city first';
+  @override
+  String get pilihKecamatanDahulu => 'Select a district first';
+  @override
+  String get cariWilayah => 'Search region';
+  @override
+  String get gagalMuatWilayah => 'Failed to load region data.';
+  @override
+  String get wilayahWajib => 'Complete regency, district, and village.';
+  @override
+  String get pilihDomisili => 'Select regency, district, village';
+  @override
+  String get infoKataSandiSementara =>
+      'Once approved by an operator, a temporary password is emailed to you. Sign in with your NIK/email/phone and that password, then create your own username & password.';
+  @override
+  String get lupaPesanNetral =>
+      'If registered, a reset link has been sent to your email.';
+  @override
+  String get resetTokenKedaluwarsa =>
+      'The reset link is invalid or has expired. Please request a new link.';
+  @override
+  String get mintaTautanBaru => 'Request New Link';
 }
