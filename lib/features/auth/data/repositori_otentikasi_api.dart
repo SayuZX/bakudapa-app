@@ -4,8 +4,11 @@ import '../../../core/config/endpoints.dart';
 import '../../../core/config/storage_keys.dart';
 import '../../../core/errors/kesalahan.dart';
 import '../../../core/network/klien_jaringan.dart';
+import '../../../core/services/layanan_sidik_perangkat.dart';
 import '../../../core/services/penyimpanan_aman.dart';
+import '../../../core/utils/token_jwt.dart';
 import '../../../shared/models/pengguna.dart';
+import '../../../shared/models/perangkat_aktif.dart';
 import '../domain/repositori_otentikasi.dart';
 import 'model_otp.dart';
 
@@ -21,59 +24,48 @@ class RepositoriOtentikasiApi implements RepositoriOtentikasi {
   Future<HasilLogin> masuk({
     required String identitas,
     required String kataSandi,
-    Map<String, dynamic>? perangkat,
   }) async {
     try {
+      final perangkat = await LayananSidikPerangkat.instance.identitas();
       final res = await _dio.post(
         Endpoints.authMasuk,
         data: {
           'identitas': identitas,
           'kata_sandi': kataSandi,
-          'perangkat': perangkat ?? const <String, dynamic>{},
+          ...perangkat.keJsonLogin(),
         },
         options: Options(extra: const {'anonim': true}),
       );
-      final body = res.data as Map<String, dynamic>;
-      final data = body['data'] as Map<String, dynamic>? ?? body;
-      if (data['perlu_otp'] == true) {
-        final penggunaJson =
-            (data['pengguna'] ?? data['user']) as Map<String, dynamic>? ??
-                const {};
-        return HasilLogin(
-          pengguna: Pengguna.dariJson(penggunaJson),
-          tokenAkses: '',
-          tokenSegar: '',
-          kedaluwarsaPada: DateTime.now(),
-          perluOtp: true,
-        );
-      }
-      return _bacaHasilLogin(body);
+      return _simpanSesi(_bacaData(res.data));
     } on DioException catch (e) {
-      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
+      final kesalahan = e.error;
+      if (kesalahan is KesalahanTidakBerwenang ||
+          kesalahan is KesalahanKredensialSalah) {
+        throw const KesalahanKredensialSalah();
+      }
+      throw kesalahan is Kesalahan ? kesalahan : const KesalahanTakDikenal();
     }
   }
 
   @override
-  Future<HasilLogin> daftar({
-    required String nik,
-    required String namaLengkap,
-    required String surel,
-    required String noHp,
+  Future<HasilLogin> cabutDanMasuk({
+    required String identitas,
     required String kataSandi,
+    required String idSesiDicabut,
   }) async {
     try {
+      final perangkat = await LayananSidikPerangkat.instance.identitas();
       final res = await _dio.post(
-        Endpoints.registrasiMulai,
+        Endpoints.authCabutDanMasuk,
         data: {
-          'nik': nik,
-          'nama_lengkap': namaLengkap,
-          'email': surel,
-          'no_hp': noHp,
+          'identitas': identitas,
           'kata_sandi': kataSandi,
+          'id_sesi_dicabut': idSesiDicabut,
+          'perangkat': perangkat.keBlokPerangkat(),
         },
         options: Options(extra: const {'anonim': true}),
       );
-      return _bacaHasilLogin(res.data as Map<String, dynamic>);
+      return _simpanSesi(_bacaData(res.data));
     } on DioException catch (e) {
       throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
     }
@@ -95,9 +87,7 @@ class RepositoriOtentikasiApi implements RepositoriOtentikasi {
         },
         options: Options(extra: const {'anonim': true}),
       );
-      final body = res.data as Map<String, dynamic>;
-      final data = body['data'] as Map<String, dynamic>? ?? body;
-      return HasilKirimUlangOtp.dariJson(data);
+      return HasilKirimUlangOtp.dariJson(_bacaData(res.data));
     } on DioException catch (e) {
       throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
     }
@@ -111,6 +101,7 @@ class RepositoriOtentikasiApi implements RepositoriOtentikasi {
     KanalOtp? kanal,
   }) async {
     try {
+      final perangkat = await LayananSidikPerangkat.instance.identitas();
       final res = await _dio.post(
         Endpoints.authOtpVerifikasi,
         data: {
@@ -118,16 +109,57 @@ class RepositoriOtentikasiApi implements RepositoriOtentikasi {
           'kode': kode,
           'tipe': tipe.kode,
           if (kanal != null) 'kanal': kanal.kode,
+          'device_fingerprint': perangkat.sidikJari,
+          'perangkat': perangkat.keBlokPerangkat(),
         },
         options: Options(extra: const {'anonim': true}),
       );
-      final body = res.data as Map<String, dynamic>;
-      final data = body['data'] as Map<String, dynamic>? ?? body;
-      final hasil = HasilVerifikasiOtp.dariJson(tipe, data);
+      final hasil = HasilVerifikasiOtp.dariJson(tipe, _bacaData(res.data));
       if (hasil is HasilVerifikasiOtpLogin) {
-        await _simpanTokenLogin(hasil);
+        await _simpanToken(
+          tokenAkses: hasil.tokenAkses,
+          tokenRefresh: hasil.tokenSegar,
+          kedaluwarsa: hasil.kedaluwarsaPada,
+          userId: hasil.pengguna.id,
+        );
       }
       return hasil;
+    } on DioException catch (e) {
+      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
+    }
+  }
+
+  @override
+  Future<bool> cekUsername(String username) async {
+    try {
+      final res = await _dio.get(
+        Endpoints.profilCekUsername,
+        queryParameters: {'username': username},
+      );
+      return _bacaData(res.data)['tersedia'] == true;
+    } on DioException catch (e) {
+      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
+    }
+  }
+
+  @override
+  Future<HasilKredensial> aturKredensial({
+    required String username,
+    required String kataSandiBaru,
+  }) async {
+    try {
+      final res = await _dio.put(
+        Endpoints.profilKredensial,
+        data: {
+          'username': username,
+          'kata_sandi_baru': kataSandiBaru,
+        },
+      );
+      final data = _bacaData(res.data);
+      return HasilKredensial(
+        diatur: data['kredensial_diatur'] == true,
+        username: data['username']?.toString(),
+      );
     } on DioException catch (e) {
       throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
     }
@@ -137,8 +169,56 @@ class RepositoriOtentikasiApi implements RepositoriOtentikasi {
   Future<Pengguna> mintaProfilSaya() async {
     try {
       final res = await _dio.get(Endpoints.authSaya);
-      final data = res.data as Map<String, dynamic>;
-      return Pengguna.dariJson(data['data'] as Map<String, dynamic>? ?? data);
+      final data = _bacaData(res.data);
+      final pengguna = data['pengguna'];
+      return Pengguna.dariJson(
+        pengguna is Map<String, dynamic> ? pengguna : data,
+      );
+    } on DioException catch (e) {
+      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
+    }
+  }
+
+  @override
+  Future<Pengguna> perbaruiProfil({
+    String? namaLengkap,
+    String? telepon,
+    String? alamat,
+    String? tempatLahir,
+    String? tanggalLahir,
+    String? jenisKelamin,
+  }) async {
+    try {
+      await _dio.put(
+        Endpoints.profil,
+        data: {
+          'pengguna': {
+            'nama_lengkap': ?namaLengkap,
+            'tempat_lahir': ?tempatLahir,
+            'tanggal_lahir': ?tanggalLahir,
+            'jenis_kelamin': ?jenisKelamin,
+          },
+        },
+      );
+      return mintaProfilSaya();
+    } on DioException catch (e) {
+      throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
+    }
+  }
+
+  @override
+  Future<void> gantiKataSandi({
+    required String kataSandiLama,
+    required String kataSandiBaru,
+  }) async {
+    try {
+      await _dio.put(
+        Endpoints.profilKataSandi,
+        data: {
+          'kata_sandi_lama': kataSandiLama,
+          'kata_sandi_baru': kataSandiBaru,
+        },
+      );
     } on DioException catch (e) {
       throw e.error is Kesalahan ? e.error! as Kesalahan : const KesalahanTakDikenal();
     }
@@ -186,36 +266,71 @@ class RepositoriOtentikasiApi implements RepositoriOtentikasi {
     await _penyimpanan.hapus(StorageKeys.userId);
   }
 
-  Future<HasilLogin> _bacaHasilLogin(Map<String, dynamic> body) async {
-    final data = body['data'] as Map<String, dynamic>? ?? body;
-    final tokenAkses = data['token_akses']?.toString() ?? data['access_token']?.toString() ?? '';
-    final tokenSegar = data['token_segar']?.toString() ?? data['refresh_token']?.toString() ?? '';
-    final kedaluwarsa = data['kedaluwarsa_pada']?.toString() ?? data['expires_at']?.toString();
-    final penggunaJson = (data['pengguna'] ?? data['user']) as Map<String, dynamic>? ?? const {};
-    final pengguna = Pengguna.dariJson(penggunaJson);
-    final waktuKedaluwarsa = DateTime.tryParse(kedaluwarsa ?? '') ??
-        DateTime.now().add(const Duration(hours: 1));
+  Future<HasilLogin> _simpanSesi(Map<String, dynamic> data) async {
+    final pengguna = Pengguna.dariJson(
+      data['pengguna'] is Map<String, dynamic>
+          ? data['pengguna'] as Map<String, dynamic>
+          : const {},
+    );
+    final tokenAkses = data['token_akses']?.toString() ?? '';
+    final tokenRefresh = data['token_refresh']?.toString();
+    final perluOtp = data['perlu_otp'] == true;
+    final wajibGanti = data['wajib_ganti_kata_sandi'] == true;
+    final kedaluwarsa =
+        DateTime.tryParse(data['kedaluwarsa_pada']?.toString() ?? '') ??
+            TokenJwt.bacaKedaluwarsa(tokenAkses) ??
+            DateTime.now().add(const Duration(hours: 1));
 
-    await _penyimpanan.tulis(StorageKeys.accessToken, tokenAkses);
-    await _penyimpanan.tulis(StorageKeys.refreshToken, tokenSegar);
-    await _penyimpanan.tulis(StorageKeys.kedaluwarsa, waktuKedaluwarsa.toIso8601String());
-    await _penyimpanan.tulis(StorageKeys.userId, pengguna.id);
+    await _simpanToken(
+      tokenAkses: tokenAkses,
+      tokenRefresh: tokenRefresh,
+      kedaluwarsa: kedaluwarsa,
+      userId: pengguna.id,
+    );
+
+    final kelolaRaw = data['kelola_perangkat'];
+    final kelola = kelolaRaw is Map<String, dynamic>
+        ? KelolaPerangkat.dariJson(kelolaRaw)
+        : null;
 
     return HasilLogin(
       pengguna: pengguna,
       tokenAkses: tokenAkses,
-      tokenSegar: tokenSegar,
-      kedaluwarsaPada: waktuKedaluwarsa,
+      tokenRefresh: tokenRefresh,
+      kedaluwarsaPada: kedaluwarsa,
+      perluOtp: perluOtp,
+      wajibGantiKataSandi: wajibGanti,
+      kelolaPerangkat: kelola,
     );
   }
 
-  Future<void> _simpanTokenLogin(HasilVerifikasiOtpLogin hasil) async {
-    await _penyimpanan.tulis(StorageKeys.accessToken, hasil.tokenAkses);
-    await _penyimpanan.tulis(StorageKeys.refreshToken, hasil.tokenSegar);
+  Future<void> _simpanToken({
+    required String tokenAkses,
+    String? tokenRefresh,
+    required DateTime kedaluwarsa,
+    required String userId,
+  }) async {
+    if (tokenAkses.isNotEmpty) {
+      await _penyimpanan.tulis(StorageKeys.accessToken, tokenAkses);
+    }
+    if (tokenRefresh != null && tokenRefresh.isNotEmpty) {
+      await _penyimpanan.tulis(StorageKeys.refreshToken, tokenRefresh);
+    }
     await _penyimpanan.tulis(
       StorageKeys.kedaluwarsa,
-      hasil.kedaluwarsaPada.toIso8601String(),
+      kedaluwarsa.toIso8601String(),
     );
-    await _penyimpanan.tulis(StorageKeys.userId, hasil.pengguna.id);
+    if (userId.isNotEmpty) {
+      await _penyimpanan.tulis(StorageKeys.userId, userId);
+    }
+  }
+
+  Map<String, dynamic> _bacaData(dynamic body) {
+    if (body is Map<String, dynamic>) {
+      final inner = body['data'];
+      if (inner is Map<String, dynamic>) return inner;
+      return body;
+    }
+    return const {};
   }
 }
