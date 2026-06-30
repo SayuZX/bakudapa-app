@@ -50,7 +50,7 @@ class KotakCentangSetuju extends StatelessWidget {
                       TextSpan(
                         text: aksenTaut,
                         style: context.teks.bodyMedium?.copyWith(
-                          color: Warna.merahUtama,
+                          color: Warna.primer,
                           fontWeight: FontWeight.w700,
                           decoration: TextDecoration.underline,
                         ),
