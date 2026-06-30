@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/warna.dart';
+
 enum KeputusanAi {
   terverifikasi('terverifikasi'),
   ditolak('ditolak'),
@@ -22,11 +24,11 @@ enum KeputusanAi {
       };
 
   Color get warna => switch (this) {
-        terverifikasi => Colors.green,
-        ditolak => Colors.red,
-        perluRevisi => Colors.orange,
-        perluReviewManusia => Colors.amber,
-        diluarCakupan => Colors.grey,
+        terverifikasi => Warna.sukses,
+        ditolak => Warna.bahaya,
+        perluRevisi => Warna.peringatan,
+        perluReviewManusia => Warna.peringatan,
+        diluarCakupan => Warna.tunda,
       };
 
   IconData get ikon => switch (this) {
