@@ -30,6 +30,7 @@ class _HalamanResetKataSandiBaruState
   final _kataSandi = TextEditingController();
   final _konfirmasi = TextEditingController();
   bool _sedang = false;
+  bool _tokenBermasalah = false;
 
   @override
   void dispose() {
@@ -62,6 +63,10 @@ class _HalamanResetKataSandiBaruState
       if (!mounted) return;
       context.tampilkanSukses(t.kataSandiBerhasilDiubah);
       context.go(NamaRute.masuk);
+    } on KesalahanTidakBerwenang {
+      if (!mounted) return;
+      setState(() => _tokenBermasalah = true);
+      context.tampilkanPesan(t.resetTokenKedaluwarsa, galat: true);
     } on Kesalahan catch (e) {
       if (!mounted) return;
       context.tampilkanPesan(e.pesan, galat: true);
@@ -106,24 +111,48 @@ class _HalamanResetKataSandiBaruState
               saatKirim: (_) => _simpan(),
             ),
             const SizedBox(height: Jarak.xxl),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: FilledButton(
-                onPressed: _sedang ? null : _simpan,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Warna.merahUtama,
-                  disabledBackgroundColor: Warna.netral200,
-                  foregroundColor: Colors.white,
-                  shape: const StadiumBorder(),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                child: Text(t.simpanKataSandiBaru),
+            if (_tokenBermasalah) ...[
+              Text(
+                t.resetTokenKedaluwarsa,
+                style: context.teks.bodySmall?.copyWith(color: Warna.bahaya),
               ),
-            ),
+              const SizedBox(height: Jarak.md),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  onPressed: () => context.go(NamaRute.lupaKataSandi),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Warna.primer,
+                    foregroundColor: Colors.white,
+                    shape: const StadiumBorder(),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  child: Text(t.mintaTautanBaru),
+                ),
+              ),
+            ] else
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  onPressed: _sedang ? null : _simpan,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Warna.primer,
+                    disabledBackgroundColor: Warna.netral200,
+                    foregroundColor: Colors.white,
+                    shape: const StadiumBorder(),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  child: Text(t.simpanKataSandiBaru),
+                ),
+              ),
           ],
         ),
       ),
