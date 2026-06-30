@@ -48,7 +48,7 @@ class BingkaiKameraDokumen extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
                           border:
-                              Border.all(color: Warna.merahUtama, width: 2),
+                              Border.all(color: Warna.primer, width: 2),
                         ),
                       ),
                     ),
