@@ -1,265 +1,355 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
-import '../../../core/dialogs/dialog_aplikasi.dart';
 import '../../../core/errors/kesalahan.dart';
 import '../../../core/extensions/konteks.dart';
 import '../../../core/localization/teks.dart';
 import '../../../core/router/nama_rute.dart';
+import '../../../core/router/navigasi_aman.dart';
 import '../../../core/theme/dimensi.dart';
 import '../../../core/theme/warna.dart';
 import '../../../core/utils/format.dart';
+import '../../../shared/models/jenis_layanan.dart';
 import '../../../shared/models/pemberitahuan.dart';
 import '../../../shared/providers/penyedia_pemberitahuan.dart';
 import '../../../shared/widgets/kondisi_galat.dart';
 import '../../../shared/widgets/kondisi_kosong.dart';
 import '../../../shared/widgets/pemuat_kerlip.dart';
 
-class HalamanPemberitahuan extends ConsumerWidget {
+const _kategoriFilter = [
+  KategoriPemberitahuan.status,
+  KategoriPemberitahuan.tindakan,
+  KategoriPemberitahuan.info,
+  KategoriPemberitahuan.sistem,
+];
+
+class HalamanPemberitahuan extends ConsumerStatefulWidget {
   const HalamanPemberitahuan({super.key});
 
-  Future<void> _tandaiSemua(BuildContext context, WidgetRef ref) async {
-    final t = ref.read(teksProvider);
-    final yakin = await DialogAplikasi.tampilkanKonfirmasi(
-      context: context,
-      judul: t.tandaiSemuaSudahDibaca,
-      pesan: t.semuaPemberitahuanDitandai,
-      labelKonfirmasi: t.tandaiSemua,
-      nada: NadaDialog.info,
-    );
-    if (!yakin || !context.mounted) return;
-    await ref.read(penyediaPemberitahuan.notifier).tandaiSemuaDibaca();
-    if (context.mounted) context.tampilkanSukses(t.semuaPemberitahuanDitandaiDibaca);
+  @override
+  ConsumerState<HalamanPemberitahuan> createState() =>
+      _HalamanPemberitahuanState();
+}
+
+class _HalamanPemberitahuanState extends ConsumerState<HalamanPemberitahuan> {
+  final _pengaturGulir = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _pengaturGulir.addListener(_pantauGulir);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(penyediaJumlahBelumDibaca.notifier).segarkan();
+    });
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final keadaan = ref.watch(penyediaPemberitahuan);
-    final pengatur = ref.read(penyediaPemberitahuan.notifier);
-    final jumlahBelum = ref.watch(penyediaJumlahBelumDibaca);
+  void dispose() {
+    _pengaturGulir.removeListener(_pantauGulir);
+    _pengaturGulir.dispose();
+    super.dispose();
+  }
+
+  void _pantauGulir() {
+    if (!_pengaturGulir.hasClients) return;
+    final pos = _pengaturGulir.position;
+    if (pos.pixels >= pos.maxScrollExtent - 400) {
+      ref.read(penyediaPemberitahuan.notifier).muatBerikutnya();
+    }
+  }
+
+  void _buka(Pemberitahuan notifikasi) {
+    if (!notifikasi.dibaca) {
+      ref.read(penyediaPemberitahuan.notifier).tandaiDibaca(notifikasi.id);
+    }
+    final id = notifikasi.permohonanId;
+    if (id == null || id.isEmpty) return;
+    final slug = notifikasi.metadata?.jenisLayanan;
+    if (slug == null || JenisLayanan.dariSlug(slug) == null) return;
+    context.pushAman('${NamaRute.detailPermohonan}/$slug/$id');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final t = ref.watch(teksProvider);
+    final kondisi = ref.watch(penyediaPemberitahuan);
+    final belumDibaca = ref.watch(penyediaJumlahBelumDibaca);
+    final notifier = ref.read(penyediaPemberitahuan.notifier);
 
     return Scaffold(
       backgroundColor: Warna.latar,
       appBar: AppBar(
-        title: Text(t.pemberitahuanJudul),
+        title: Text(t.tabNotifikasi),
         actions: [
-          if (jumlahBelum > 0)
-            IconButton(
-              tooltip: t.tandaiSudahDibaca,
-              onPressed: () => _tandaiSemua(context, ref),
-              icon: const Icon(HugeIcons.strokeRoundedCheckmarkSquare01),
+          if (belumDibaca > 0)
+            TextButton(
+              onPressed: notifier.tandaiSemuaDibaca,
+              child: Text(t.tandaiSemua),
             ),
+          const SizedBox(width: Jarak.sm),
         ],
       ),
-      body: SafeArea(
-        top: false,
-        child: keadaan.when(
-          loading: () => const DaftarKerangka(),
-          error: (e, _) => KondisiGalat(
-            pesan: pesanRamah(e, fallback: t.terjadiKesalahan),
-            saatCobaLagi: pengatur.muat,
+      body: Column(
+        children: [
+          _BilahFilter(
+            kondisi: kondisi,
+            teks: t,
+            saatDibaca: notifier.pilihDibaca,
+            saatKategori: notifier.pilihKategori,
           ),
-          data: (daftar) {
-            if (daftar.isEmpty) {
-              return RefreshIndicator(
-                color: Warna.merahUtama,
-                onRefresh: pengatur.muat,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    const SizedBox(height: 80),
-                    KondisiKosong(
-                      ikon: HugeIcons.strokeRoundedNotification01,
-                      judul: t.belumAdaPemberitahuan,
-                      pesan: t.pembaruanStatusAkanMuncul,
-                    ),
-                  ],
-                ),
-              );
-            }
-            final kelompok = _kelompokkanPerTanggal(daftar, t);
-            return RefreshIndicator(
-              color: Warna.merahUtama,
-              onRefresh: pengatur.muat,
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  Jarak.layarH,
-                  Jarak.md,
-                  Jarak.layarH,
-                  Jarak.xxl,
-                ),
-                itemCount: kelompok.length,
-                itemBuilder: (_, indeks) {
-                  final k = kelompok[indeks];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: Jarak.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 0, 0, Jarak.sm),
-                          child: Text(
-                            k.judul,
-                            style: context.teks.labelMedium?.copyWith(
-                              color: Warna.teksKedua,
-                              letterSpacing: 0.4,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Warna.permukaan,
-                            borderRadius: BorderRadius.circular(Sudut.lg),
-                            border: Border.all(color: Warna.garis),
-                          ),
-                          child: Column(
-                            children: [
-                              for (var i = 0; i < k.daftar.length; i++) ...[
-                                _BarisPemberitahuan(
-                                  notifikasi: k.daftar[i],
-                                  saatKetuk: () => _tanganiKetuk(
-                                    context,
-                                    ref,
-                                    k.daftar[i],
-                                  ),
-                                ),
-                                if (i < k.daftar.length - 1)
-                                  const Divider(
-                                    height: 1,
-                                    thickness: 1,
-                                    indent: 60,
-                                    color: Warna.pemisah,
-                                  ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
+          Expanded(child: _bangunIsi(t, kondisi)),
+        ],
       ),
     );
   }
 
-  void _tanganiKetuk(
-    BuildContext context,
-    WidgetRef ref,
-    Pemberitahuan n,
-  ) {
-    if (!n.dibaca) {
-      ref.read(penyediaPemberitahuan.notifier).tandaiDibaca(n.id);
+  Widget _bangunIsi(Teks t, KondisiPemberitahuan kondisi) {
+    if (kondisi.memuat && kondisi.daftar.isEmpty) {
+      return const DaftarKerangka();
     }
-    if (n.idPermohonan != null) {
-      context.push('${NamaRute.detailPermohonan}/${n.idPermohonan}');
+    if (kondisi.galat != null && kondisi.daftar.isEmpty) {
+      return KondisiGalat(
+        pesan: pesanRamah(
+          kondisi.galat,
+          fallback: t.gagalMuatNotifikasi,
+          teks: t,
+        ),
+        saatCobaLagi: () => ref.read(penyediaPemberitahuan.notifier).muat(),
+      );
     }
-  }
-
-  List<_KelompokTanggal> _kelompokkanPerTanggal(
-      List<Pemberitahuan> daftar, Teks t) {
-    final sekarang = DateTime.now();
-    final hariIni = DateTime(sekarang.year, sekarang.month, sekarang.day);
-    final kemarin = hariIni.subtract(const Duration(days: 1));
-    final mingguIni = hariIni.subtract(const Duration(days: 7));
-
-    final hi = <Pemberitahuan>[];
-    final ke = <Pemberitahuan>[];
-    final mi = <Pemberitahuan>[];
-    final lainnya = <Pemberitahuan>[];
-
-    for (final n in daftar) {
-      final tgl = DateTime(n.diterimaPada.year, n.diterimaPada.month, n.diterimaPada.day);
-      if (tgl == hariIni) {
-        hi.add(n);
-      } else if (tgl == kemarin) {
-        ke.add(n);
-      } else if (tgl.isAfter(mingguIni)) {
-        mi.add(n);
-      } else {
-        lainnya.add(n);
-      }
-    }
-
-    final hasil = <_KelompokTanggal>[];
-    if (hi.isNotEmpty) hasil.add(_KelompokTanggal(t.hariIni, hi));
-    if (ke.isNotEmpty) hasil.add(_KelompokTanggal(t.kemarin, ke));
-    if (mi.isNotEmpty) hasil.add(_KelompokTanggal(t.mingguIni, mi));
-    if (lainnya.isNotEmpty) hasil.add(_KelompokTanggal(t.sebelumnya, lainnya));
-    return hasil;
+    return RefreshIndicator(
+      color: Warna.primer,
+      onRefresh: () => ref.read(penyediaPemberitahuan.notifier).segarkan(),
+      child: kondisi.daftar.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(height: context.ukuran.height * 0.12),
+                KondisiKosong(
+                  judul: t.notifKosongJudul,
+                  pesan: t.notifKosongPesan,
+                  ikon: HugeIcons.strokeRoundedNotification01,
+                ),
+              ],
+            )
+          : ListView.separated(
+              controller: _pengaturGulir,
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: const EdgeInsets.fromLTRB(
+                Jarak.layarH,
+                Jarak.md,
+                Jarak.layarH,
+                Jarak.xxxl,
+              ),
+              itemCount: kondisi.daftar.length + (kondisi.memuatLagi ? 1 : 0),
+              separatorBuilder: (_, _) => const SizedBox(height: Jarak.sm),
+              itemBuilder: (context, indeks) {
+                if (indeks >= kondisi.daftar.length) {
+                  return const _PemuatKaki();
+                }
+                final notifikasi = kondisi.daftar[indeks];
+                return _BarisNotifikasi(
+                      notifikasi: notifikasi,
+                      saatKetuk: () => _buka(notifikasi),
+                    )
+                    .animate(delay: (indeks.clamp(0, 8) * 30).ms)
+                    .fadeIn(duration: 220.ms, curve: Curves.easeOutCubic);
+              },
+            ),
+    );
   }
 }
 
-class _KelompokTanggal {
-  const _KelompokTanggal(this.judul, this.daftar);
-  final String judul;
-  final List<Pemberitahuan> daftar;
-}
-
-class _BarisPemberitahuan extends StatelessWidget {
-  const _BarisPemberitahuan({
-    required this.notifikasi,
-    required this.saatKetuk,
+class _BilahFilter extends StatelessWidget {
+  const _BilahFilter({
+    required this.kondisi,
+    required this.teks,
+    required this.saatDibaca,
+    required this.saatKategori,
   });
 
-  final Pemberitahuan notifikasi;
-  final VoidCallback saatKetuk;
+  final KondisiPemberitahuan kondisi;
+  final Teks teks;
+  final ValueChanged<bool?> saatDibaca;
+  final ValueChanged<KategoriPemberitahuan?> saatKategori;
 
-  _IkonKategori _ikon() {
-    switch (notifikasi.kategori) {
-      case 'status':
-        return const _IkonKategori(
-          ikon: HugeIcons.strokeRoundedTaskDaily01,
-          warna: Warna.info,
-        );
-      case 'tindakan':
-        return const _IkonKategori(
-          ikon: HugeIcons.strokeRoundedAlert02,
-          warna: Warna.peringatan,
-        );
-      case 'info':
-        return const _IkonKategori(
-          ikon: HugeIcons.strokeRoundedInformationCircle,
-          warna: Warna.teksKedua,
-        );
-      default:
-        return const _IkonKategori(
-          ikon: HugeIcons.strokeRoundedNotification01,
-          warna: Warna.merahUtama,
-        );
+  String _label(KategoriPemberitahuan k) {
+    switch (k) {
+      case KategoriPemberitahuan.status:
+        return teks.kategoriStatus;
+      case KategoriPemberitahuan.tindakan:
+        return teks.kategoriTindakan;
+      case KategoriPemberitahuan.info:
+        return teks.kategoriInfo;
+      case KategoriPemberitahuan.sistem:
+        return teks.kategoriSistem;
+      case KategoriPemberitahuan.takDikenal:
+        return teks.kategoriInfo;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final ikon = _ikon();
+    return Container(
+      padding: const EdgeInsets.only(bottom: Jarak.sm),
+      decoration: const BoxDecoration(
+        color: Warna.latar,
+        border: Border(bottom: BorderSide(color: Warna.garis, width: 0.6)),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(
+          Jarak.layarH,
+          Jarak.sm,
+          Jarak.layarH,
+          0,
+        ),
+        child: Row(
+          children: [
+            _ChipFilter(
+              label: teks.filterSemua,
+              aktif: kondisi.filterDibaca == null,
+              saatKetuk: () => saatDibaca(null),
+            ),
+            _ChipFilter(
+              label: teks.filterBelumDibaca,
+              aktif: kondisi.filterDibaca == false,
+              saatKetuk: () => saatDibaca(false),
+            ),
+            Container(
+              width: 1,
+              height: 22,
+              margin: const EdgeInsets.symmetric(horizontal: Jarak.sm),
+              color: Warna.garis,
+            ),
+            for (final k in _kategoriFilter)
+              _ChipFilter(
+                label: _label(k),
+                aktif: kondisi.filterKategori == k,
+                saatKetuk: () =>
+                    saatKategori(kondisi.filterKategori == k ? null : k),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChipFilter extends StatelessWidget {
+  const _ChipFilter({
+    required this.label,
+    required this.aktif,
+    required this.saatKetuk,
+  });
+
+  final String label;
+  final bool aktif;
+  final VoidCallback saatKetuk;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: Jarak.sm),
+      child: Material(
+        color: aktif ? Warna.primer : Warna.permukaan,
+        shape: StadiumBorder(
+          side: BorderSide(color: aktif ? Warna.primer : Warna.garis),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: saatKetuk,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Jarak.lg,
+              vertical: Jarak.sm,
+            ),
+            child: Text(
+              label,
+              style: context.teks.labelLarge?.copyWith(
+                color: aktif ? Warna.putih : Warna.teksKedua,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PemuatKaki extends StatelessWidget {
+  const _PemuatKaki();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: Jarak.lg),
+      child: Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2, color: Warna.primer),
+        ),
+      ),
+    );
+  }
+}
+
+class _BarisNotifikasi extends StatelessWidget {
+  const _BarisNotifikasi({required this.notifikasi, required this.saatKetuk});
+
+  final Pemberitahuan notifikasi;
+  final VoidCallback saatKetuk;
+
+  IconData get _ikon {
+    switch (notifikasi.kategori) {
+      case KategoriPemberitahuan.status:
+        return HugeIcons.strokeRoundedFile02;
+      case KategoriPemberitahuan.tindakan:
+        return HugeIcons.strokeRoundedAlert02;
+      case KategoriPemberitahuan.info:
+        return HugeIcons.strokeRoundedInformationCircle;
+      case KategoriPemberitahuan.sistem:
+        return HugeIcons.strokeRoundedSettings02;
+      case KategoriPemberitahuan.takDikenal:
+        return HugeIcons.strokeRoundedNotification01;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final belum = !notifikasi.dibaca;
     return Material(
-      color: Colors.transparent,
+      color: belum ? Warna.primerLembut : Warna.permukaan,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Sudut.lg),
+        side: BorderSide(color: belum ? Colors.transparent : Warna.garis),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: saatKetuk,
-        borderRadius: BorderRadius.circular(Sudut.lg),
         child: Padding(
-          padding: const EdgeInsets.all(Jarak.md),
+          padding: const EdgeInsets.all(Jarak.lg),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: ikon.warna.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(Sudut.sm),
+                  color: belum ? Warna.permukaan : Warna.netral50,
+                  shape: BoxShape.circle,
                 ),
-                alignment: Alignment.center,
-                child: Icon(ikon.ikon, color: ikon.warna, size: 18),
+                child: Icon(
+                  _ikon,
+                  size: 19,
+                  color: belum ? Warna.primer : Warna.teksKedua,
+                ),
               ),
               const SizedBox(width: Jarak.md),
               Expanded(
@@ -271,21 +361,22 @@ class _BarisPemberitahuan extends StatelessWidget {
                         Expanded(
                           child: Text(
                             notifikasi.judul,
-                            style: context.teks.titleSmall?.copyWith(
-                              fontWeight: notifikasi.dibaca
-                                  ? FontWeight.w500
-                                  : FontWeight.w700,
-                            ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            style: context.teks.titleSmall?.copyWith(
+                              fontWeight: belum
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        if (!notifikasi.dibaca)
+                        if (belum)
                           Container(
                             width: 8,
                             height: 8,
+                            margin: const EdgeInsets.only(left: Jarak.sm),
                             decoration: const BoxDecoration(
-                              color: Warna.merahUtama,
+                              color: Warna.primer,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -294,16 +385,16 @@ class _BarisPemberitahuan extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       notifikasi.pesan,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: context.teks.bodySmall?.copyWith(
                         color: Warna.teksKedua,
-                        height: 1.4,
+                        height: 1.45,
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      Format.relatif(notifikasi.diterimaPada),
+                      Format.relatif(notifikasi.dikirimPada),
                       style: context.teks.labelSmall?.copyWith(
                         color: Warna.teksKetiga,
                       ),
@@ -317,10 +408,4 @@ class _BarisPemberitahuan extends StatelessWidget {
       ),
     );
   }
-}
-
-class _IkonKategori {
-  const _IkonKategori({required this.ikon, required this.warna});
-  final IconData ikon;
-  final Color warna;
 }
