@@ -3,9 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/storage_keys.dart';
 
-/// One-shot migration dari kunci penyimpanan lama (sk_*, pref_*) ke kunci
-/// baru (bakudapa_*). Aman dijalankan berkali-kali — kalau target sudah ada
-/// atau sumber tidak ada, tidak melakukan apa-apa.
 class MigrasiKunciSimpanan {
   MigrasiKunciSimpanan._();
 
