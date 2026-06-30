@@ -13,6 +13,7 @@ import '../../../../core/camera/penilai_foto.dart';
 import '../../../../core/camera/pratinjau_kamera_isi.dart';
 import '../../../../core/extensions/konteks.dart';
 import '../../../../core/liveness/layanan_deteksi_wajah.dart';
+import '../../../../core/liveness/penghalus_gerak.dart';
 import '../../../../core/localization/teks.dart';
 import '../../../../core/network/penjaga_jaringan.dart';
 import '../../../../core/router/nama_rute.dart';
@@ -61,6 +62,9 @@ class _HalamanFotoWajahState extends ConsumerState<HalamanFotoWajah>
   bool _streamAktif = false;
   int _hitunganFrame = 0;
   HasilDeteksiWajah _wajah = HasilDeteksiWajah.tidakAda;
+  final PenghalusEma _yaw = PenghalusEma(alpha: 0.3);
+  final PenghalusEma _pitch = PenghalusEma(alpha: 0.3);
+  final PenghalusOffset _offset = PenghalusOffset(alpha: 0.35);
   bool _kameraGoyang = false;
   StreamSubscription<HasilGerakPerangkat>? _langganGerak;
 
@@ -175,7 +179,10 @@ class _HalamanFotoWajahState extends ConsumerState<HalamanFotoWajah>
       gambar,
       c.description,
     );
-    if (!mounted) return;
+    if (hasil == null || !mounted) return;
+    _yaw.terapkan(hasil.ada ? ((hasil.sudutY ?? 0) / 30).clamp(-1.0, 1.0) : 0.0);
+    _pitch.terapkan(hasil.ada ? ((hasil.sudutX ?? 0) / 30).clamp(-1.0, 1.0) : 0.0);
+    _offset.terapkan(hasil.ada ? hasil.pusatRelatif : Offset.zero);
     setState(() => _wajah = hasil);
   }
 
@@ -508,14 +515,14 @@ class _HalamanFotoWajahState extends ConsumerState<HalamanFotoWajah>
                           : !_siap || _kontroler == null
                           ? const Center(
                               child: CircularProgressIndicator(
-                                  color: Warna.merahUtama, strokeWidth: 2.4),
+                                  color: Warna.primer, strokeWidth: 2.4),
                             )
                           : BingkaiWajahLiveness(
                               kondisi: _kondisiBingkai(_statusWajah()),
-                              offsetWajah: _wajah.pusatRelatif,
+                              offsetWajah: _offset.nilai,
                               wajahTerdeteksi: _wajah.ada,
-                              yawNorm: ((_wajah.sudutY ?? 0) / 30).clamp(-1.0, 1.0),
-                              pitchNorm: ((_wajah.sudutX ?? 0) / 30).clamp(-1.0, 1.0),
+                              yawNorm: _yaw.nilai,
+                              pitchNorm: _pitch.nilai,
                               anak: PratinjauKameraIsi(
                                 kontroler: _kontroler!,
                                 mode: ModePratinjauKamera.fokusWajah,
@@ -595,7 +602,7 @@ class _BarisAmbil extends StatelessWidget {
       child: FilledButton(
         onPressed: aktif ? saatAmbil : null,
         style: FilledButton.styleFrom(
-          backgroundColor: Warna.merahUtama,
+          backgroundColor: Warna.primer,
           disabledBackgroundColor: Warna.netral200,
           foregroundColor: Colors.white,
           disabledForegroundColor: Warna.teksKetiga,
@@ -711,7 +718,7 @@ class _BarisLanjut extends ConsumerWidget {
             child: FilledButton(
               onPressed: memuat ? null : saatLanjut,
               style: FilledButton.styleFrom(
-                backgroundColor: Warna.merahUtama,
+                backgroundColor: Warna.primer,
                 foregroundColor: Colors.white,
                 shape: const StadiumBorder(),
                 textStyle: const TextStyle(
