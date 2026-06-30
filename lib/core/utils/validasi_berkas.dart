@@ -7,20 +7,25 @@ import '../errors/kesalahan.dart';
 class ValidasiBerkas {
   const ValidasiBerkas._();
 
-  static Future<void> periksa(File berkas) async {
+  static Future<void> periksa(
+    File berkas, {
+    int? maksByte,
+    List<String> mimeIzin = const [],
+  }) async {
     final ada = await berkas.exists();
     if (!ada) {
       throw const KesalahanUnggah('Berkas tidak ditemukan.');
     }
 
     final ukuran = await berkas.length();
-    final maksimumMb =
-        UploadLimits.dokumenPermohonanMaxByte ~/ (1024 * 1024);
-    final maksimumByte = maksimumMb * 1024 * 1024;
+    final batas = (maksByte != null && maksByte > 0)
+        ? maksByte
+        : UploadLimits.dokumenPermohonanMaxByte;
+    final maksimumMb = batas ~/ (1024 * 1024);
     if (ukuran <= 0) {
       throw const KesalahanUnggah('Berkas kosong tidak diizinkan.');
     }
-    if (ukuran > maksimumByte) {
+    if (ukuran > batas) {
       throw KesalahanUnggah(
         'Ukuran berkas melebihi ${maksimumMb}MB.',
       );
@@ -33,10 +38,12 @@ class ValidasiBerkas {
     if (mime == null) {
       throw const KesalahanUnggah('Tipe berkas tidak dikenali.');
     }
-    const tipeMimeIzin = [
-      ...UploadLimits.fotoMimeTypes,
-      ...UploadLimits.dokumenMimeTypes,
-    ];
+    final tipeMimeIzin = mimeIzin.isNotEmpty
+        ? mimeIzin
+        : const [
+            ...UploadLimits.fotoMimeTypes,
+            ...UploadLimits.dokumenMimeTypes,
+          ];
     if (!tipeMimeIzin.contains(mime)) {
       throw const KesalahanUnggah(
         'Format tidak diizinkan. Gunakan JPG, PNG, atau PDF.',
