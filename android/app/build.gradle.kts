@@ -168,7 +168,7 @@ android {
             )
         }
         jniLibs {
-            useLegacyPackaging = false
+            useLegacyPackaging = true
         }
     }
 }
