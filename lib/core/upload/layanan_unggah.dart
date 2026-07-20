@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
+import 'package:path/path.dart' as p;
 
 import '../config/endpoints.dart';
 import '../errors/kesalahan.dart';
@@ -43,6 +46,8 @@ class LayananUnggah {
 
   final Dio _dio;
   final Dio _dioLuar;
+  
+  final Map<String, Future<String>> _inFlightUploads = {};
 
   static const Set<JenisUnggah> jenisRegistrasi = {
     JenisUnggah.fotoDokumen,
@@ -55,23 +60,73 @@ class LayananUnggah {
     required JenisUnggah jenis,
     String? mimeType,
     String? tokenRegistrasi,
+    void Function(int sent, int total)? onProgress,
   }) async {
-    if (tokenRegistrasi != null && !jenisRegistrasi.contains(jenis)) {
-      throw const KesalahanUnggah(
-        'Jenis berkas ini tidak diizinkan diunggah saat pendaftaran.',
-      );
+    final kunciDeduplikasi = '${berkas.path}_${jenis.kode}_$tokenRegistrasi';
+    if (_inFlightUploads.containsKey(kunciDeduplikasi)) {
+      return await _inFlightUploads[kunciDeduplikasi]!;
     }
-    final mime = mimeType ?? _tebakMime(berkas.path);
-    final ukuran = await berkas.length();
-    final inisiasi = await _inisiasi(
+    
+    final masaDepan = _eksekusiDenganRetry(
+      berkas: berkas,
       jenis: jenis,
-      mimeType: mime,
-      ukuran: ukuran,
+      mimeType: mimeType,
       tokenRegistrasi: tokenRegistrasi,
+      onProgress: onProgress,
     );
-    await _unggahKeStorage(inisiasi, berkas, mime);
-    await _konfirmasi(inisiasi.kunciStorage, tokenRegistrasi: tokenRegistrasi);
-    return inisiasi.kunciStorage;
+    
+    _inFlightUploads[kunciDeduplikasi] = masaDepan;
+    try {
+      return await masaDepan;
+    } finally {
+      _inFlightUploads.remove(kunciDeduplikasi);
+    }
+  }
+
+  Future<String> _eksekusiDenganRetry({
+    required File berkas,
+    required JenisUnggah jenis,
+    String? mimeType,
+    String? tokenRegistrasi,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    const int maxCoba = 3;
+    int coba = 0;
+    
+    while (true) {
+      coba++;
+      try {
+        if (tokenRegistrasi != null && !jenisRegistrasi.contains(jenis)) {
+          throw const KesalahanUnggah(
+            'Jenis berkas ini tidak diizinkan diunggah saat pendaftaran.',
+          );
+        }
+        
+        final mime = mimeType ?? lookupMimeType(berkas.path) ?? _tebakMime(berkas.path);
+        final ukuran = await berkas.length();
+        
+        final inisiasi = await _inisiasi(
+          jenis: jenis,
+          mimeType: mime,
+          ukuran: ukuran,
+          tokenRegistrasi: tokenRegistrasi,
+        );
+        
+        await _unggahKeStorage(inisiasi, berkas, mime, ukuran, onProgress);
+        await _konfirmasi(inisiasi.kunciStorage, tokenRegistrasi: tokenRegistrasi);
+        
+        return inisiasi.kunciStorage;
+      } catch (e) {
+        if (e is KesalahanUnggah && !e.pesan.toLowerCase().contains('jaringan') && !e.pesan.toLowerCase().contains('timeout')) {
+          rethrow;
+        }
+        if (coba >= maxCoba) {
+          if (e is Kesalahan) rethrow;
+          throw const KesalahanUnggah('Gagal mengunggah berkas setelah beberapa kali percobaan karena gangguan jaringan.');
+        }
+        await Future.delayed(Duration(milliseconds: 1000 * coba));
+      }
+    }
   }
 
   Options _opsi(String? tokenRegistrasi) {
@@ -97,7 +152,7 @@ class LayananUnggah {
           'jenis': jenis.kode,
           'mime_type': mimeType,
           'ukuran': ukuran,
-          'token_registrasi': ?tokenRegistrasi,
+          if (tokenRegistrasi != null) 'token_registrasi': tokenRegistrasi,
         },
         options: _opsi(tokenRegistrasi),
       );
@@ -122,7 +177,7 @@ class LayananUnggah {
     } on DioException catch (e) {
       throw e.error is Kesalahan
           ? e.error! as Kesalahan
-          : const KesalahanUnggah('Tidak dapat memproses unggahan berkas.');
+          : const KesalahanUnggah('Tidak dapat memproses unggahan berkas akibat gangguan jaringan.');
     }
   }
 
@@ -130,25 +185,55 @@ class LayananUnggah {
     HasilInisiasiUnggah inisiasi,
     File berkas,
     String mime,
+    int ukuran,
+    void Function(int sent, int total)? onProgress,
   ) async {
     try {
-      final isi = await berkas.readAsBytes();
-      await _dioLuar.requestUri(
-        Uri.parse(inisiasi.urlPresigned),
-        data: Stream.fromIterable([isi]),
-        options: Options(
-          method: inisiasi.metode,
-          headers: {
-            Headers.contentTypeHeader: mime,
-            Headers.contentLengthHeader: isi.length,
-            ...inisiasi.header,
-          },
-          sendTimeout: const Duration(minutes: 3),
-          receiveTimeout: const Duration(minutes: 3),
-        ),
-      );
+      final metode = inisiasi.metode.toUpperCase();
+      
+      if (metode == 'POST') {
+        final namaBerkas = p.basename(berkas.path);
+        final mediaType = MediaType.parse(mime);
+        
+        final formDataMap = <String, dynamic>{};
+        inisiasi.header.forEach((k, v) => formDataMap[k] = v);
+        
+        formDataMap['file'] = await MultipartFile.fromFile(
+          berkas.path,
+          filename: namaBerkas,
+          contentType: mediaType,
+        );
+        
+        final formData = FormData.fromMap(formDataMap);
+        
+        await _dioLuar.post(
+          inisiasi.urlPresigned,
+          data: formData,
+          options: Options(
+            sendTimeout: const Duration(minutes: 5),
+            receiveTimeout: const Duration(minutes: 5),
+          ),
+          onSendProgress: onProgress,
+        );
+      } else {
+        await _dioLuar.requestUri(
+          Uri.parse(inisiasi.urlPresigned),
+          data: berkas.openRead(),
+          options: Options(
+            method: metode,
+            headers: {
+              Headers.contentTypeHeader: mime,
+              Headers.contentLengthHeader: ukuran,
+              ...inisiasi.header,
+            },
+            sendTimeout: const Duration(minutes: 5),
+            receiveTimeout: const Duration(minutes: 5),
+          ),
+          onSendProgress: onProgress,
+        );
+      }
     } on DioException {
-      throw const KesalahanUnggah('Gagal mengunggah berkas ke penyimpanan.');
+      throw const KesalahanUnggah('Gagal mengunggah berkas ke penyimpanan karena koneksi terputus (timeout).');
     }
   }
 
@@ -161,14 +246,14 @@ class LayananUnggah {
         Endpoints.uploadKonfirmasi,
         data: {
           'kunci_storage': kunciStorage,
-          'token_registrasi': ?tokenRegistrasi,
+          if (tokenRegistrasi != null) 'token_registrasi': tokenRegistrasi,
         },
         options: _opsi(tokenRegistrasi),
       );
     } on DioException catch (e) {
       throw e.error is Kesalahan
           ? e.error! as Kesalahan
-          : const KesalahanUnggah('Tidak dapat memproses unggahan berkas.');
+          : const KesalahanUnggah('Tidak dapat memproses unggahan berkas akibat gangguan jaringan.');
     }
   }
 
@@ -277,3 +362,4 @@ class LayananUnggah {
     }
   }
 }
+
