@@ -72,40 +72,12 @@
     native <methods>;
 }
 
--keep class org.gatechstudio.malutprovkab.Kepemilikan {
-    native <methods>;
-}
-
--keepclassmembers class * implements android.os.Parcelable {
-    public static final ** CREATOR;
-}
--keepclassmembers class * implements java.io.Serializable {
-    static final long serialVersionUID;
-    private static final java.io.ObjectStreamField[] serialPersistentFields;
-    private void writeObject(java.io.ObjectOutputStream);
-    private void readObject(java.io.ObjectInputStream);
-    java.lang.Object writeReplace();
-    java.lang.Object readResolve();
-}
-
--keepclassmembers enum * {
-    public static **[] values();
-    public static ** valueOf(java.lang.String);
-}
-
--assumenosideeffects class android.util.Log {
-    public static *** v(...);
-    public static *** d(...);
-    public static *** i(...);
-    public static *** w(...);
-    public static *** e(...);
-}
+-keep class org.gatechstudio.malutprovkab.** { *; }
+-keep class dev.fluttercommunity.plus.** { *; }
+-keep class xyz.luan.audioplayers.** { *; }
+-keep class com.llfbandit.app_links.** { *; }
 
 -optimizationpasses 5
--allowaccessmodification
--mergeinterfacesaggressively
--repackageclasses ''
--overloadaggressively
 
 -renamesourcefileattribute SourceFile
 -keepattributes SourceFile,LineNumberTable
