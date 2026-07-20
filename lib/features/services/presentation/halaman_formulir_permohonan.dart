@@ -183,6 +183,9 @@ class _FormulirIsiState extends ConsumerState<_FormulirIsi> {
                     berkas: _bangunBerkas(),
                     wajibBerkas: _bangunWajibBerkas(),
                     labelBerkas: _bangunLabelBerkas(),
+                    onProgressKeseluruhan: (progress) {
+                      ref.read(penyediaMuatGlobal.notifier).perbaruiKemajuan(progress);
+                    },
                   ),
               judul: t.mengirimPermohonan,
               pesan: t.mengunggahDokumenPesan,
