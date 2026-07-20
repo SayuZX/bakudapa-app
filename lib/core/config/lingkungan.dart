@@ -6,7 +6,7 @@ class KonfigurasiLingkungan {
   static const String _hostOverride =
       String.fromEnvironment('BAKUDAPA_HOST', defaultValue: '');
 
-  static const String _hostLokal = 'http://10.0.2.2:3000/api';
+  static const String _hostLokal = 'https://10.0.2.2:3000/api';
   static const String _hostProduksi = 'https://bakudapa.malutprov.go.id/api';
 
   static const bool _isDevLokal = _appEnv == 'dev_lokal';
