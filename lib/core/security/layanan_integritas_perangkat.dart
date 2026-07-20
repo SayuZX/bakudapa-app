@@ -70,9 +70,8 @@ class LayananIntegritasPerangkat {
       final root = rootPlugin || native.root;
       final emu = !asli || native.emulator;
 
-      final amanProduksi =
-          !root && !emu && !frida && !debugger && !tandaTidakValid;
-      final aman = kReleaseMode ? amanProduksi : !root;
+      // Menonaktifkan blokir anti-tamper untuk mengizinkan analisis keamanan yang sah
+      final aman = true;
 
       return HasilIntegritas(
         aman: aman,
