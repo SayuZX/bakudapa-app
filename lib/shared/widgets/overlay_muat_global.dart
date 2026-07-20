@@ -25,6 +25,7 @@ class OverlayMuatGlobal extends ConsumerWidget {
           _DialogMuat(
             judul: kondisi.judul,
             pesan: kondisi.pesan,
+            kemajuan: kondisi.kemajuan,
           ),
       ],
     );
@@ -32,10 +33,11 @@ class OverlayMuatGlobal extends ConsumerWidget {
 }
 
 class _DialogMuat extends StatelessWidget {
-  const _DialogMuat({this.judul, this.pesan});
+  const _DialogMuat({this.judul, this.pesan, this.kemajuan});
 
   final String? judul;
   final String? pesan;
+  final double? kemajuan;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +95,26 @@ class _DialogMuat extends StatelessWidget {
                         style: context.teks.bodySmall?.copyWith(
                           color: Warna.teksKedua,
                           height: 1.5,
+                        ),
+                      ),
+                    ],
+                    if (kemajuan != null) ...[
+                      const SizedBox(height: Jarak.lg),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: kemajuan,
+                          backgroundColor: Warna.netral200,
+                          valueColor: const AlwaysStoppedAnimation<Color>(Warna.primer),
+                          minHeight: 6,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${(kemajuan! * 100).toInt()}%',
+                        style: context.teks.labelSmall?.copyWith(
+                          color: Warna.teksKedua,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
