@@ -76,13 +76,27 @@ class RepositoriPermohonanApi implements RepositoriPermohonan {
     required Map<String, File> berkas,
     Map<String, bool> wajibBerkas = const <String, bool>{},
     Map<String, String> labelBerkas = const <String, String>{},
+    void Function(double)? onProgressKeseluruhan,
   }) async {
     final dokumen = <Map<String, dynamic>>[];
+    final totalFile = berkas.length;
+    int indeks = 0;
+    
     for (final masuk in berkas.entries) {
       final kunciStorage = await _unggah.unggah(
         berkas: masuk.value,
         jenis: JenisUnggah.dokumenPermohonan,
+        onProgress: onProgressKeseluruhan != null
+            ? (sent, total) {
+                if (total > 0) {
+                  final progressPerFile = sent / total;
+                  final progressKeseluruhan = (indeks + progressPerFile) / totalFile;
+                  onProgressKeseluruhan(progressKeseluruhan);
+                }
+              }
+            : null,
       );
+      indeks++;
       dokumen.add({
         'jenis': masuk.key,
         'label': labelBerkas[masuk.key] ?? masuk.key,

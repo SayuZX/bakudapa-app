@@ -96,6 +96,7 @@ abstract class RepositoriPermohonan {
     required Map<String, File> berkas,
     Map<String, bool> wajibBerkas = const <String, bool>{},
     Map<String, String> labelBerkas = const <String, String>{},
+    void Function(double)? onProgressKeseluruhan,
   });
 
   Future<void> batalkan(String id);
