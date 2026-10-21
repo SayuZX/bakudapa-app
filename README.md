@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="144" height="144" alt="BAKUDAPA MOBILE app logo">
+</p>
+
 <h1 align="center">BAKUDAPA MOBILE</h1>
 
 <p align="center">
