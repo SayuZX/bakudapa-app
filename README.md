@@ -165,7 +165,7 @@ This application handles workflows involving identity documents, face capture, l
 
 Report reproducible defects through [GitHub Issues](https://github.com/SayuZX/bakudapa-app/issues). Include the app version, platform, reproduction steps, and sanitized logs. Do not post credentials or personal identity data.
 
-Request written permission from **Raihan Nugroho** through [SayuZX](https://github.com/SayuZX) before modifying, renaming, rebranding, or redistributing original project material. A request or unanswered issue is not approval.
+Request written permission from **Raihan Nugroho** at [pixelraihan77@gmail.com](mailto:pixelraihan77@gmail.com) before modifying, renaming, rebranding, or redistributing original project material. A request or unanswered email is not approval.
 
 ## License and ownership
 
